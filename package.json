@@ -1,0 +1,15 @@
+{
+  "name": "hotoken",
+  "version": "0.1.0",
+  "description": "Ethereum smart contracts for Hotoken",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@git.proteus-tech.com:hotnow/hotoken.git"
+  },
+  "author": "",
+  "license": "ISC"
+}
