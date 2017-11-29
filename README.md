@@ -5,3 +5,9 @@
 ## Prerequisite
 
 - Nodejs v9.2.0
+
+## Setup
+
+```
+$ npm install
+```
