@@ -1,0 +1,1 @@
+const HotokenReservation = artifacts.require('./HotokenReservation')
