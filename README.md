@@ -15,6 +15,7 @@ $ npm install
 ## Development
 ```
 $ npm run compile
+$ npm run testrpc
 $ npm run migrate
 $ npm test
 ```
