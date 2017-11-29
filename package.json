@@ -11,5 +11,8 @@
     "url": "git@git.proteus-tech.com:hotnow/hotoken.git"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "truffle": "^4.0.1"
+  }
 }
