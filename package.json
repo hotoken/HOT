@@ -4,7 +4,10 @@
   "description": "Ethereum smart contracts for Hotoken",
   "main": "index.js",
   "scripts": {
-    "test": "truffle test"
+    "compile": "truffle compile",
+    "migrate": "truffle migrate",
+    "test": "truffle test",
+    "testrpc": "testrpc"
   },
   "repository": {
     "type": "git",
@@ -13,6 +16,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "ethereumjs-testrpc": "^6.0.3",
     "truffle": "^4.0.1"
   }
 }

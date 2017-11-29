@@ -11,3 +11,10 @@
 ```
 $ npm install
 ```
+
+## Development
+```
+$ npm run compile
+$ npm run migrate
+$ npm test
+```
