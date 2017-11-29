@@ -8,4 +8,9 @@ contract('HotokenReservation', function(accounts) {
     expect(instance).to.be.ok
   })
 
+  it('should create empty whitelist', async function() {
+    const instance = await HotokenReservation.deployed()
+    expect(instance.whitelist).to.be.ok
+  })
+
 })
