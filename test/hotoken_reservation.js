@@ -28,4 +28,14 @@ contract('HotokenReservation', function(accounts) {
     const whitelistLimit = await instance.getLimitOf.call(account)
     expect(whitelistLimit.toNumber()).to.equal(limit)
   })
+
+  it('should not be able to retrieve limit by address is not in whitelist', async function() {
+    const account = accounts[2]
+    const instance = await HotokenReservation.deployed()
+    try {
+      const whitelistLimit = await instance.getLimitOf.call(account)
+    } catch(e) {
+      expect(e.toString().indexOf('revert')).to.be.above(-1)
+    }
+  })
 })
