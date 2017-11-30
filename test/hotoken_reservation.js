@@ -17,7 +17,9 @@ contract('HotokenReservation', function(accounts) {
     const newAccount = accounts[1]
     const limit = 100
     const instance = await HotokenReservation.deployed()
-    const result = await instance.addToWhitelist(newAccount, 100)
+    const result = await instance.addToWhitelist(newAccount, limit)
+    expect(result).to.be.ok
+    expect(result).to.be.not.empty
     expect(Object.keys(result)).to.have.lengthOf(3)
   })
 
@@ -44,10 +46,22 @@ contract('HotokenReservation', function(accounts) {
     const limits = [100, 200, 300]
     const instance = await HotokenReservation.deployed()
     const result = await instance.addManyToWhitelist(newAccounts, limits)
+    expect(result).to.be.ok
+    expect(result).to.be.not.empty
     expect(Object.keys(result)).to.have.lengthOf(3)
     expect((await instance.getLimitOf.call(newAccounts[0])).toNumber()).to.be.equal(limits[0])
     expect((await instance.getLimitOf.call(newAccounts[1])).toNumber()).to.be.equal(limits[1])
     expect((await instance.getLimitOf.call(newAccounts[2])).toNumber()).to.be.equal(limits[2])
   })
 
+  it('should be able to update the limit of address in whitelist', async function() {
+    const account = accounts[1]
+    const limit = 1000
+    const instance = await HotokenReservation.deployed()
+    const result = await instance.addToWhitelist(account, limit)
+    expect(result).to.be.ok
+    expect(result).to.be.not.empty
+    expect(Object.keys(result)).to.have.lengthOf(3)
+    expect((await instance.getLimitOf.call(account)).toNumber()).to.be.equal(limit)
+  })
 })

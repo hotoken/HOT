@@ -8,7 +8,17 @@ contract HotokenReservation {
         uint reserved;
     }
 
+    struct ReservedHotToken {
+        address owner;
+        uint token;
+        uint spent;
+    }
+
     mapping(address=>Reservation) public whitelist;
+    mapping(uint=>mapping(address=>ReservedHotToken)) public thirtyBonusToken;
+    mapping(uint=>mapping(address=>ReservedHotToken)) public twentyBonusToken;
+    mapping(uint=>mapping(address=>ReservedHotToken)) public tenBonusToken;
+    mapping(uint=>mapping(address=>ReservedHotToken)) public normalToken;
     
     function HotokenReservation() public {
 
