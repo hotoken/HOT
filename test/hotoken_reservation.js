@@ -17,9 +17,15 @@ contract('HotokenReservation', function(accounts) {
     const newAccount = accounts[1]
     const limit = 100
     const instance = await HotokenReservation.deployed()
-    await instance.addToWhitelist(newAccount, limit)
-    const whitelistLimit = await instance.whitelist.call(newAccount)
-    expect(whitelistLimit.toNumber()).to.equal(limit)
+    const result = await instance.addToWhitelist(newAccount, 100)
+    expect(Object.keys(result)).to.have.lengthOf(3)
   })
 
+  it('should be able to retrive limit by address', async function() {
+    const account = accounts[1]
+    const limit = 100
+    const instance = await HotokenReservation.deployed()
+    const whitelistLimit = await instance.getLimitOf.call(account)
+    expect(whitelistLimit.toNumber()).to.equal(limit)
+  })
 })
