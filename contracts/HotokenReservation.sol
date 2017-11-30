@@ -1,6 +1,14 @@
 pragma solidity ^0.4.17;
 
-contract HotokenReservation {
+import '../node_modules/zeppelin-solidity/contracts/token/StandardToken.sol';
+
+contract HotokenReservation is StandardToken {
+
+    string public constant name = "Hotoken";
+    string public constant symbol = "HTKN";
+    uint8 public constant decimals = 18;
+
+    uint256 public constant INITIAL_SUPPLY = 10000 * (10 ** uint256(decimals));
 
     struct Reservation {
         address owner;
@@ -11,17 +19,22 @@ contract HotokenReservation {
     struct ReservedHotToken {
         address owner;
         uint token;
-        uint spent;
+        uint ethAmount;
     }
 
     mapping(address=>Reservation) public whitelist;
-    mapping(uint=>mapping(address=>ReservedHotToken)) public thirtyBonusToken;
-    mapping(uint=>mapping(address=>ReservedHotToken)) public twentyBonusToken;
-    mapping(uint=>mapping(address=>ReservedHotToken)) public tenBonusToken;
-    mapping(uint=>mapping(address=>ReservedHotToken)) public normalToken;
+    mapping(uint=>mapping(address=>ReservedHotToken)) public reservedToken;
     
     function HotokenReservation() public {
+        totalSupply = INITIAL_SUPPLY;
+        balances[msg.sender] = INITIAL_SUPPLY;
+    }
 
+    function () payable {
+        require(whitelist[msg.sender].reserved == 1);
+        require(whitelist[msg.sender].limit >= msg.value);
+        uint amount = msg.value;
+        reservedToken[30][msg.sender] = ReservedHotToken(msg.sender, 1000, amount);
     }
 
     function addToWhitelist(address _newAddress, uint _amount) public {

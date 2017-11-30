@@ -2,7 +2,7 @@ const {expect} = require('chai')
 const HotokenReservation = artifacts.require('./HotokenReservation')
 
 contract('HotokenReservation', function(accounts) {
-  
+
   it('should be able to deployed', async function() {
     const instance = await HotokenReservation.deployed()
     expect(instance).to.be.ok
@@ -64,4 +64,5 @@ contract('HotokenReservation', function(accounts) {
     expect(Object.keys(result)).to.have.lengthOf(3)
     expect((await instance.getLimitOf.call(account)).toNumber()).to.be.equal(limit)
   })
+
 })
