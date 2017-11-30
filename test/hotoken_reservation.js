@@ -38,4 +38,16 @@ contract('HotokenReservation', function(accounts) {
       expect(e.toString().indexOf('revert')).to.be.above(-1)
     }
   })
+
+  it('should be able to add many new addresses to the whitelist', async function() {
+    const newAccounts = [accounts[2], accounts[3], accounts[4]]
+    const limits = [100, 200, 300]
+    const instance = await HotokenReservation.deployed()
+    const result = await instance.addManyToWhitelist(newAccounts, limits)
+    expect(Object.keys(result)).to.have.lengthOf(3)
+    expect((await instance.getLimitOf.call(newAccounts[0])).toNumber()).to.be.equal(limits[0])
+    expect((await instance.getLimitOf.call(newAccounts[1])).toNumber()).to.be.equal(limits[1])
+    expect((await instance.getLimitOf.call(newAccounts[2])).toNumber()).to.be.equal(limits[2])
+  })
+
 })
