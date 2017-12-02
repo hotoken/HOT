@@ -18,18 +18,11 @@ contract HotokenReservation is StandardToken, Ownable {
     }
 
     mapping(address=>uint) public whitelist;
-    // mapping(string=>mapping(address=>ReservedHotToken)) public reservedToken;
     
     function HotokenReservation() public {
         totalSupply = INITIAL_SUPPLY;
         balances[msg.sender] = INITIAL_SUPPLY;
     }
-
-    // function () payable {
-    //     require(whitelist[msg.sender] == 1);
-    //     uint amount = msg.value;
-    //     reservedToken["30%"][msg.sender] = ReservedHotToken(msg.sender, 1000, amount);
-    // }
 
     function addToWhitelist(address _newAddress) public {
         whitelist[_newAddress] = 1;
@@ -38,6 +31,16 @@ contract HotokenReservation is StandardToken, Ownable {
     function addManyToWhitelist(address[] _newAddresses) public {
         for (uint i = 0; i < _newAddresses.length; i++) {
             whitelist[_newAddresses[i]] = 1;
+        }
+    }
+
+    function removeFromWhiteList(address _address) public {
+        whitelist[_address] = 0;
+    }
+
+    function removeManyFromWhitelist(address[] _addresses) public {
+        for (uint i = 0; i < _addresses.length; i++) {
+            whitelist[_addresses[i]] = 0;
         }
     }
 }

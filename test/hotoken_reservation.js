@@ -40,4 +40,21 @@ contract('HotokenReservation', function(accounts) {
     expect((await instance.whitelist.call(newAccounts[1])).toNumber()).to.be.equal(1)
     expect((await instance.whitelist.call(newAccounts[2])).toNumber()).to.be.equal(1)
   })
+
+  it('should be able to remove address from whitelist', async function() {
+    const account = accounts[1]
+    const instance = await HotokenReservation.deployed()
+    await instance.removeFromWhiteList(account)
+    const exists = await instance.whitelist.call(account)
+    expect(exists.toNumber()).to.equal(0)
+  })
+
+  it('should be able to remove many addresses from whitelist', async function() {
+    const listOfAccounts = [accounts[2], accounts[3], accounts[4]]
+    const instance = await HotokenReservation.deployed()
+    await instance.removeManyFromWhitelist(accounts)
+    expect((await instance.whitelist.call(listOfAccounts[0])).toNumber()).to.be.equal(0)
+    expect((await instance.whitelist.call(listOfAccounts[1])).toNumber()).to.be.equal(0)
+    expect((await instance.whitelist.call(listOfAccounts[2])).toNumber()).to.be.equal(0)
+  })
 })
