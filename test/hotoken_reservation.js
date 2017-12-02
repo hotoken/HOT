@@ -59,6 +59,26 @@ contract('HotokenReservation', function(accounts) {
     expect((await instance.whitelist.call(listOfAccounts[1])).toNumber()).to.be.equal(0)
     expect((await instance.whitelist.call(listOfAccounts[2])).toNumber()).to.be.equal(0)
   })
+
+  it('should not be able to add address to whitelist if caller is not the owner', async function() {
+    const newAccount = accounts[1]
+    const instance = await HotokenReservation.deployed()
+    try {
+      await instance.addToWhitelist(newAccount, {from: accounts[2]})
+    } catch (e) {
+      expect(e.toString()).to.be.include('revert')
+    }
+  })
+
+  it('should not be able to add many addresses to whitelist if caller is not the owner', async function() {
+    const newAccounts = [accounts[2], accounts[3], accounts[4]]
+    const instance = await HotokenReservation.deployed()
+    try {
+      await instance.addManyToWhitelist(newAccounts, {from: accounts[2]})
+    } catch (e) {
+      expect(e.toString()).to.be.include('revert')
+    }
+  })
 })
 
 contract('HotokenReservation buy token', function(accounts) {
