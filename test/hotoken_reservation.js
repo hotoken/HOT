@@ -104,4 +104,21 @@ contract('HotokenReservation buy token', function(accounts) {
     }
     expect((await instance.weiRaised.call()).toNumber()).to.be.equal(Number(amountWei))
   })
+
+  it('should not be able to retrieve ether from owner contract address', async function() {
+    const instance = await HotokenReservation.deployed()
+    const rate = (await instance.rate.call()).toNumber()
+
+    var amountEther = 2
+    var amountWei = web3.toWei(amountEther, 'ether')
+
+    const ownerEtherBefore = (await web3.eth.getBalance(accounts[0])).toNumber()
+
+    try {
+      await instance.sendTransaction({from: accounts[0], value: amountWei})
+    } catch (e) {
+      expect(e.toString()).to.be.include('revert')
+    }
+    expect((await instance.weiRaised.call()).toNumber()).to.be.equal(Number(amountWei))
+  })
 })
