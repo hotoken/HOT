@@ -2,6 +2,7 @@ pragma solidity ^0.4.17;
 
 import '../node_modules/zeppelin-solidity/contracts/token/StandardToken.sol';
 import '../node_modules/zeppelin-solidity/contracts/ownership/Ownable.sol';
+import '../node_modules/zeppelin-solidity/contracts/math/SafeMath.sol';
 
 contract HotokenReservation is StandardToken, Ownable {
     
@@ -10,6 +11,10 @@ contract HotokenReservation is StandardToken, Ownable {
     uint8 public constant decimals = 18;
 
     uint256 public constant INITIAL_SUPPLY = 3000000000 * (10 ** uint256(decimals));
+    // Fixed rate for now
+    uint256 public constant rate = 2 * (10 ** uint256(3));
+
+    uint256 public weiRaised;
 
     struct ReservedHotToken {
         address owner;
@@ -18,10 +23,45 @@ contract HotokenReservation is StandardToken, Ownable {
     }
 
     mapping(address=>uint) public whitelist;
+
+    /**
+    * event for token purchase logging
+    * @param purchaser who paid for the tokens
+    * @param beneficiary who got the tokens
+    * @param value weis paid for purchase
+    * @param amount amount of tokens purchased
+    */
+    event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
     
     function HotokenReservation() public {
         totalSupply = INITIAL_SUPPLY;
         balances[msg.sender] = INITIAL_SUPPLY;
+        weiRaised = 0;
+    }
+
+    // fallback function can be used to buy tokens
+    function () external payable {
+        buyTokens(msg.sender);
+    }
+
+    function buyTokens(address beneficiary) public payable {
+        require(beneficiary != address(0));
+        require(owner != beneficiary);
+        require(whitelist[beneficiary] == 1);
+        require(weiRaised <= totalSupply);
+
+        uint256 weiAmount = msg.value;
+        // calculate token amount to be created
+        uint256 tokens = weiAmount.mul(rate);
+
+        // update state
+        weiRaised = weiRaised.add(weiAmount);
+
+        // transfer token to purchaser
+        uint currentBalance = balances[beneficiary];
+        balances[beneficiary] = currentBalance.add(tokens);
+        owner.transfer(weiAmount);
+        TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
     }
 
     function addToWhitelist(address _newAddress) public {

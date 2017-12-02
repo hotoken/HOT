@@ -58,3 +58,29 @@ contract('HotokenReservation', function(accounts) {
     expect((await instance.whitelist.call(listOfAccounts[2])).toNumber()).to.be.equal(0)
   })
 })
+
+contract('HotokenReservation buy token', function(accounts) {
+
+  it('retrieve 2 ether for contributor that is in the whitelist', async function() {
+    const instance = await HotokenReservation.deployed()
+    const user1 = accounts[1]
+    const rate = (await instance.rate.call()).toNumber()
+    await instance.addToWhitelist(user1)
+
+    expect((await instance.whitelist.call(user1)).toNumber()).to.be.equal(1)
+
+    var amountEther = 2
+    var amountWei = web3.toWei(amountEther, 'ether')
+
+    const ownerEtherBefore = (await web3.eth.getBalance(accounts[0])).toNumber()
+
+    await instance.sendTransaction({from: user1, value: amountWei})
+
+    const user1BalanceAfter = (await instance.balanceOf(user1)).toNumber()
+    const ownerEtherAfter = (await web3.eth.getBalance(accounts[0])).toNumber()
+
+    expect(user1BalanceAfter).to.be.equal(rate * amountWei)
+    expect(ownerEtherAfter).to.be.above(ownerEtherBefore)
+    expect((await instance.weiRaised.call()).toNumber()).to.be.equal(Number(amountWei))
+  })
+})
