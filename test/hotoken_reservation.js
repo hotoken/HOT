@@ -61,7 +61,7 @@ contract('HotokenReservation', function(accounts) {
 
 contract('HotokenReservation buy token', function(accounts) {
 
-  it('retrieve 2 ether for contributor that is in the whitelist', async function() {
+  it('should be able to retrieve 2 ether for contributor that is in the whitelist', async function() {
     const instance = await HotokenReservation.deployed()
     const user1 = accounts[1]
     const rate = (await instance.rate.call()).toNumber()
@@ -74,13 +74,34 @@ contract('HotokenReservation buy token', function(accounts) {
 
     const ownerEtherBefore = (await web3.eth.getBalance(accounts[0])).toNumber()
 
-    await instance.sendTransaction({from: user1, value: amountWei})
+    try {
+      await instance.sendTransaction({from: user1, value: amountWei})
+      const user1BalanceAfter = (await instance.balanceOf(user1)).toNumber()
+      const ownerEtherAfter = (await web3.eth.getBalance(accounts[0])).toNumber()
 
-    const user1BalanceAfter = (await instance.balanceOf(user1)).toNumber()
-    const ownerEtherAfter = (await web3.eth.getBalance(accounts[0])).toNumber()
+      expect(user1BalanceAfter).to.be.equal(rate * amountWei)
+      expect(ownerEtherAfter).to.be.above(ownerEtherBefore)
+      expect((await instance.weiRaised.call()).toNumber()).to.be.equal(Number(amountWei))
+    } catch (e) {
+      expect(e.toString()).to.be.include('revert')
+    }
+  })
 
-    expect(user1BalanceAfter).to.be.equal(rate * amountWei)
-    expect(ownerEtherAfter).to.be.above(ownerEtherBefore)
+  it('should not be able to retrieve ether from address that it is not in the whitelist', async function() {
+    const instance = await HotokenReservation.deployed()
+
+    const user2 = accounts[2]
+    const rate = (await instance.rate.call()).toNumber()
+    expect((await instance.whitelist.call(user2)).toNumber()).to.be.equal(0)
+
+    var amountEther = 2
+    var amountWei = web3.toWei(amountEther, 'ether')
+
+    try {
+      await instance.sendTransaction({from: user2, value: amountWei})
+    } catch (e) {
+      expect(e.toString()).to.be.include('revert')
+    }
     expect((await instance.weiRaised.call()).toNumber()).to.be.equal(Number(amountWei))
   })
 })
