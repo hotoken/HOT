@@ -81,4 +81,20 @@ contract HotokenReservation is StandardToken, Ownable {
             whitelist[_addresses[i]] = 0;
         }
     }
+
+    /**
+     * Overrides ERC20 transfer function with modifier that prevents the
+     * ability to transfer tokens until after transfers have been enabled.
+     */
+    function transfer(address _to, uint256 _value) public onlyOwner returns (bool) {
+        return super.transfer(_to, _value);
+    }
+
+    /**
+     * Overrides ERC20 transferFrom function with modifier that prevents the
+     * ability to transfer tokens until after transfers have been enabled.
+     */
+    function transferFrom(address _from, address _to, uint256 _value) public onlyOwner returns (bool) {
+        return super.transferFrom(_from, _to, _value);
+    }
 }
