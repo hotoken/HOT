@@ -19,6 +19,12 @@ contract HotokenReservation is StandardToken, Ownable {
 
     mapping(address=>uint) public whitelist;
 
+    modifier validDestination(address _to) {
+        require(_to != address(0x0));
+        require(_to != owner);
+        _;
+    }
+
     /**
     * event for token purchase logging
     * @param purchaser who paid for the tokens
@@ -82,19 +88,11 @@ contract HotokenReservation is StandardToken, Ownable {
         }
     }
 
-    /**
-     * Overrides ERC20 transfer function with modifier that prevents the
-     * ability to transfer tokens until after transfers have been enabled.
-     */
-    function transfer(address _to, uint256 _value) public onlyOwner returns (bool) {
+    function transfer(address _to, uint256 _value) public onlyOwner validDestination(_to) returns (bool) {
         return super.transfer(_to, _value);
     }
 
-    /**
-     * Overrides ERC20 transferFrom function with modifier that prevents the
-     * ability to transfer tokens until after transfers have been enabled.
-     */
-    function transferFrom(address _from, address _to, uint256 _value) public onlyOwner returns (bool) {
+    function transferFrom(address _from, address _to, uint256 _value) public onlyOwner validDestination(_to) returns (bool) {
         return super.transferFrom(_from, _to, _value);
     }
 }

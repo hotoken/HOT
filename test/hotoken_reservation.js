@@ -201,32 +201,38 @@ contract('HotokenReservation transfer token', function(accounts) {
   it('should be able transfer token by owner address', async function() {
     const instance = await HotokenReservation.deployed()
     const user1 = accounts[1]
-    const user2 = accounts[2]
-    await instance.addToWhitelist(user1)
 
-    const amountEther = 5
-    const amountWei = web3.toWei(amountEther, 'ether')
-    await instance.sendTransaction({from: user1, value: amountWei})
-
-    const user1BalanceAfter = (await instance.balanceOf(user1)).toNumber()
-    await instance.transfer(user2, user1BalanceAfter)
-    const user2BalanceAfter = (await instance.balanceOf(user2)).toNumber()
-    expect(user2BalanceAfter).to.be.equal(user1BalanceAfter)
+    await instance.transfer(user1, 1000)
+    expect((await instance.balanceOf(user1)).toNumber()).to.be.equal(1000)
   })
   
   it('should not be able transfer token by not owner address', async function() {
     const instance = await HotokenReservation.deployed()
     const user1 = accounts[1]
     const user2 = accounts[2]
-    await instance.addToWhitelist(user1)
 
-    const amountEther = 5
-    const amountWei = web3.toWei(amountEther, 'ether')
-    await instance.sendTransaction({from: user1, value: amountWei})
-
-    const user1BalanceAfter = (await instance.balanceOf(user1)).toNumber()
     try {
-      await instance.transfer(user2, user1BalanceAfter, {from: user1})
+      await instance.transfer(user2, 1000, {from: user1})
+    } catch (e) {
+      expect(e.toString()).to.be.include('revert')
+    }
+  })
+
+  it('should not be able transfer token to 0x address', async function() {
+    const instance = await HotokenReservation.deployed()
+
+    try {
+      await instance.transfer("0x0", 1000)
+    } catch (e) {
+      expect(e.toString()).to.be.include('revert')
+    }
+  })
+
+  it('should not be able transfer token to owne contract itself', async function() {
+    const instance = await HotokenReservation.deployed()
+
+    try {
+      await instance.transfer(accounts[0], 1000)
     } catch (e) {
       expect(e.toString()).to.be.include('revert')
     }
