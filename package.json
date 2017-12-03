@@ -7,7 +7,8 @@
     "compile": "truffle compile",
     "migrate": "truffle migrate",
     "test": "truffle test",
-    "testrpc": "testrpc"
+    "testrpc": "testrpc",
+    "deploy": "node ./scripts/deploy"
   },
   "repository": {
     "type": "git",
@@ -18,7 +19,9 @@
   "devDependencies": {
     "chai": "^4.1.2",
     "ethereumjs-testrpc": "^6.0.3",
+    "solc": "^0.4.19",
     "truffle": "^4.0.1",
+    "web3": "^1.0.0-beta.26",
     "zeppelin-solidity": "^1.4.0"
   }
 }
