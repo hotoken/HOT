@@ -111,8 +111,8 @@ contract('HotokenReservation buy token', function(accounts) {
 
     expect((await instance.whitelist.call(user1)).toNumber()).to.be.equal(1)
 
-    var amountEther = 2
-    var amountWei = web3.toWei(amountEther, 'ether')
+    const amountEther = 2
+    const amountWei = web3.toWei(amountEther, 'ether')
 
     const ownerEtherBefore = (await web3.eth.getBalance(accounts[0])).toNumber()
     const tokenSoldBefore = (await instance.tokenSold.call()).toNumber()
@@ -135,8 +135,8 @@ contract('HotokenReservation buy token', function(accounts) {
     const rate = (await instance.rate.call()).toNumber()
     expect((await instance.whitelist.call(user2)).toNumber()).to.be.equal(0)
 
-    var amountEther = 2
-    var amountWei = web3.toWei(amountEther, 'ether')
+    const amountEther = 2
+    const amountWei = web3.toWei(amountEther, 'ether')
     const tokenSold = (await instance.tokenSold.call()).toNumber()
 
     try {
@@ -151,8 +151,8 @@ contract('HotokenReservation buy token', function(accounts) {
     const instance = await HotokenReservation.deployed()
     const rate = (await instance.rate.call()).toNumber()
 
-    var amountEther = 2
-    var amountWei = web3.toWei(amountEther, 'ether')
+    const amountEther = 2
+    const amountWei = web3.toWei(amountEther, 'ether')
 
     const ownerEtherBefore = (await web3.eth.getBalance(accounts[0])).toNumber()
     const tokenSold = (await instance.tokenSold.call()).toNumber()
@@ -171,8 +171,8 @@ contract('HotokenReservation buy token', function(accounts) {
     const rate = (await instance.rate.call()).toNumber()
     await instance.addToWhitelist(user2)
 
-    var amountEther = 5
-    var amountWei = web3.toWei(amountEther, 'ether')
+    const amountEther = 5
+    const amountWei = web3.toWei(amountEther, 'ether')
 
     const ownerEtherBefore = (await web3.eth.getBalance(accounts[0])).toNumber()
     const tokenSoldBefore = (await instance.tokenSold.call()).toNumber()
@@ -193,5 +193,48 @@ contract('HotokenReservation buy token', function(accounts) {
     expect(tx.logs[0].args.beneficiary).to.be.equal(user2)
     expect(tx.logs[0].args.value.toNumber()).to.be.equal(Number(amountWei))
     expect(tx.logs[0].args.amount.toNumber()).to.be.equal(rate * amountWei)
+  })
+})
+
+contract('HotokenReservation transfer token', function(accounts) {
+
+  it('should be able transfer token by owner address', async function() {
+    const instance = await HotokenReservation.deployed()
+    const user1 = accounts[1]
+
+    await instance.transfer(user1, 1000)
+    expect((await instance.balanceOf(user1)).toNumber()).to.be.equal(1000)
+  })
+  
+  it('should not be able transfer token by not owner address', async function() {
+    const instance = await HotokenReservation.deployed()
+    const user1 = accounts[1]
+    const user2 = accounts[2]
+
+    try {
+      await instance.transfer(user2, 1000, {from: user1})
+    } catch (e) {
+      expect(e.toString()).to.be.include('revert')
+    }
+  })
+
+  it('should not be able transfer token to 0x address', async function() {
+    const instance = await HotokenReservation.deployed()
+
+    try {
+      await instance.transfer("0x0", 1000)
+    } catch (e) {
+      expect(e.toString()).to.be.include('revert')
+    }
+  })
+
+  it('should not be able transfer token to owne contract itself', async function() {
+    const instance = await HotokenReservation.deployed()
+
+    try {
+      await instance.transfer(accounts[0], 1000)
+    } catch (e) {
+      expect(e.toString()).to.be.include('revert')
+    }
   })
 })
