@@ -12,7 +12,7 @@ contract HotokenReservation is StandardToken, Ownable {
 
     uint256 public constant INITIAL_SUPPLY = 3000000000 * (10 ** uint256(decimals));
     // Fixed rate for now
-    uint256 public constant rate = 2 * (10 ** uint256(3));
+    uint256 public constant rate = 6 * (10 ** uint256(6));
 
     uint256 public tokenSold;
     uint256 public weiRaised;
@@ -44,7 +44,6 @@ contract HotokenReservation is StandardToken, Ownable {
         require(beneficiary != address(0));
         require(owner != beneficiary);
         require(whitelist[beneficiary] == 1);
-        require(tokenSold <= totalSupply);
 
         uint256 weiAmount = msg.value;
         // calculate token amount to be created
@@ -55,8 +54,10 @@ contract HotokenReservation is StandardToken, Ownable {
         weiRaised = weiRaised.add(weiAmount);
 
         // transfer token to purchaser
+        require(tokenSold <= totalSupply);
         uint currentBalance = balances[beneficiary];
         balances[beneficiary] = currentBalance.add(tokens);
+
         owner.transfer(weiAmount);
         TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
     }
