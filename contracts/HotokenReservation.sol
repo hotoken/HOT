@@ -105,6 +105,7 @@ contract HotokenReservation is StandardToken, Ownable {
         TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
     }
 
+    // Whitelist manipulate function
     function addToWhitelist(address _newAddress) public onlyOwner {
         whitelist[_newAddress] = 1;
     }
@@ -123,6 +124,10 @@ contract HotokenReservation is StandardToken, Ownable {
         for (uint i = 0; i < _addresses.length; i++) {
             whitelist[_addresses[i]] = 0;
         }
+    }
+
+    function existsInWhitelist(address _address) external view returns (uint) {
+        return whitelist[_address];
     }
 
     // Set pause state [for preventing from buyer]
@@ -147,6 +152,21 @@ contract HotokenReservation is StandardToken, Ownable {
         uint _discountRate = getDiscountRate();
         uint usdRate = usdRateMap[_currency];
         return (_discountRate.add(uint(100)).div(uint(100))).mul(HTKN_PER_ETH).mul(usdRate);
+    }
+
+
+    /**
+    * To set current usd rate
+    * @param _currency eg. ["ETH", "BTC", "USD"]
+    * @param _rate rate for currency to usd
+    */
+    function setUSDRate(string _currency, uint _rate) public onlyOwner {
+        usdRateMap[_currency] = _rate;
+    }
+
+    function getUSDRate(string _currency) external view returns (uint) {
+        require(usdRateMap[_currency] > 0);
+        return usdRateMap[_currency];
     }
 
 
