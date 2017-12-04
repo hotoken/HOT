@@ -3,7 +3,7 @@ module.exports = {
     test: {
       host: 'localhost',
       port: 8545,
-      gas: 4000000,
+      gas: 3700000,
     }
   }
 }
