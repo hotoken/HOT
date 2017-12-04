@@ -12,7 +12,7 @@ contract HotokenReservation is StandardToken, Ownable {
 
     uint256 public constant INITIAL_SUPPLY = 3000000000 * (10 ** uint256(decimals));
     // Fixed rate for now
-    uint256 public constant rate = 6 * (10 ** uint256(6));
+    uint256 public rate;
 
     uint256 public tokenSold;
     uint256 public weiRaised;
@@ -34,11 +34,12 @@ contract HotokenReservation is StandardToken, Ownable {
     */
     event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
     
-    function HotokenReservation() public {
+    function HotokenReservation(uint _rate) public {
         totalSupply = INITIAL_SUPPLY;
         balances[msg.sender] = INITIAL_SUPPLY;
         tokenSold = 0;
         weiRaised = 0;
+        rate = _rate;
     }
 
     // fallback function can be used to buy tokens
@@ -94,5 +95,9 @@ contract HotokenReservation is StandardToken, Ownable {
 
     function transferFrom(address _from, address _to, uint256 _value) public onlyOwner validDestination(_to) returns (bool) {
         return super.transferFrom(_from, _to, _value);
+    }
+
+    function setRate(uint256 _rate) public onlyOwner {
+        rate = _rate;
     }
 }

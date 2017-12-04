@@ -228,7 +228,7 @@ contract('HotokenReservation transfer token', function(accounts) {
     }
   })
 
-  it('should not be able transfer token to owne contract itself', async function() {
+  it('should not be able transfer token to own contract itself', async function() {
     const instance = await HotokenReservation.deployed()
 
     try {
@@ -238,3 +238,32 @@ contract('HotokenReservation transfer token', function(accounts) {
     }
   })
 })
+
+contract('HotokenReservation custom rate', function(accounts) {
+  
+  it('should be able to set rate via contract owner', async function() {
+    const instance = await HotokenReservation.deployed()
+    const rateBefore = (await instance.rate.call()).toNumber()
+    const customRate = 20
+    await instance.setRate(customRate)
+
+    const rateAfter = (await instance.rate.call()).toNumber()
+    expect(rateAfter).to.be.equal(customRate)
+    expect(rateAfter).to.not.be.equal(rateBefore)
+  })
+
+  it('should not be able to set rate via another address', async function() {
+    const instance = await HotokenReservation.deployed()
+    const user1 = accounts[1]
+    const rateBefore = (await instance.rate.call()).toNumber()
+    const customRate = 20
+    try {
+      await instance.setRate(customRate, {from: user1})
+    } catch (e) {
+      expect(e.toString()).to.be.include('revert')
+    }
+
+    const rateAfter = (await instance.rate.call()).toNumber()
+    expect(rateAfter).to.be.equal(rateBefore)
+  })
+})  
