@@ -19,6 +19,7 @@ contract HotokenReservation is StandardToken, Ownable {
     uint256 public tokenSold;
     bool    public pauseEnabled = false;
     bool    public transferEnabled = false;
+    uint256 public minimumPurchase;
 
     // Struct
     struct Ledger {
@@ -72,11 +73,15 @@ contract HotokenReservation is StandardToken, Ownable {
     function HotokenReservation() public {
         totalSupply = INITIAL_SUPPLY;
         balances[msg.sender] = INITIAL_SUPPLY;
+
         tokenSold = 0;
         discountRate = DiscountRate.ZERO;
+
         usdRateMap["ETH"] = 4 * (10 ** uint(2));
         usdRateMap["USD"] = 1;
         usdRateMap["BTC"] = 11 * (10 ** uint(3));
+
+        minimumPurchase = 5 * (10 ** uint(4));
     }
 
     // fallback function can be used to buy tokens
@@ -157,8 +162,8 @@ contract HotokenReservation is StandardToken, Ownable {
 
     /**
     * To set current usd rate
-    * @param _currency eg. ["ETH", "BTC", "USD"]
-    * @param _rate rate for currency to usd
+    * @param _currency eg. ["ETH", "BTC", "USD"] (string)
+    * @param _rate rate for currency to usd (int)
     */
     function setUSDRate(string _currency, uint _rate) public onlyOwner {
         usdRateMap[_currency] = _rate;
@@ -167,6 +172,18 @@ contract HotokenReservation is StandardToken, Ownable {
     function getUSDRate(string _currency) external view returns (uint) {
         require(usdRateMap[_currency] > 0);
         return usdRateMap[_currency];
+    }
+
+    /**
+    * To set minimum purchase
+    * @param _minimum in usd (int)
+    */
+    function setMinimumPurchase(uint _minimum) public onlyOwner {
+        minimumPurchase = _minimum;
+    }
+
+    function getMinimumPurchase() external view returns (uint) {
+        return minimumPurchase;
     }
 
 
