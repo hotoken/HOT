@@ -348,3 +348,38 @@ contract('HotokenReservation set minimum purchase', function(accounts) {
     expect(AfterMinimum).to.be.equal(currentMinimumPurchase)
   })
 })
+
+contract('HotokenReservation set pause state', function(accounts) {
+
+  it('should have initial value for pause state after contract deployed', async function() {
+    const instance = await HotokenReservation.deployed()
+    const isPauseEnabled = (await instance.isPauseEnabled())
+    expect(isPauseEnabled).to.be.false
+  })
+
+  it('should be able to set pause state', async function() {
+    const instance = await HotokenReservation.deployed()
+    const isPauseEnabledBefore = (await instance.isPauseEnabled())
+    expect(isPauseEnabledBefore).to.be.false
+
+    await instance.setPauseEnabled(true)
+    const isPauseEnabledAfter = (await instance.isPauseEnabled())
+    expect(isPauseEnabledAfter).to.be.not.equal(isPauseEnabledBefore)
+    expect(isPauseEnabledAfter).to.be.true
+  })
+
+  it('should not be able to set pause state if not call by contract owner', async function() {
+    const instance = await HotokenReservation.deployed()
+    const isPauseEnabledBefore = (await instance.isPauseEnabled())
+    const user1 = accounts[1]
+
+    try {
+      await instance.setPauseEnabled(true)
+    } catch (e) {
+      expect(e.toString()).to.be.include('revert')
+    }
+    const isPauseEnabledAfter = (await instance.isPauseEnabled())
+    expect(isPauseEnabledAfter).to.be.equal(isPauseEnabledBefore)
+  })
+})
+  

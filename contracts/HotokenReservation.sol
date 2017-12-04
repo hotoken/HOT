@@ -135,9 +135,16 @@ contract HotokenReservation is StandardToken, Ownable {
         return whitelist[_address];
     }
 
-    // Set pause state [for preventing from buyer]
+    /**
+    * set pause state for preventing sale from buyers
+    * @param _pauseEnabled boolean
+    */
     function setPauseEnabled(bool _pauseEnabled) public onlyOwner {
         pauseEnabled = _pauseEnabled;
+    }
+
+    function isPauseEnabled() external view returns (bool) {
+        return pauseEnabled;
     }
 
     /**
