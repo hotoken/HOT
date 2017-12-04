@@ -13,10 +13,10 @@ contract HotokenReservation is StandardToken, Ownable {
     // using StringUtils for *;
 
     // Constants
-    string public constant NAME = "ReservedHotoken";
-    string public constant SYMBOL = "RHTKN";
-    uint8 public constant DECIMALS = 18;
-    uint256 public constant INITIAL_SUPPLY = 3000000000 * (10 ** uint256(DECIMALS));
+    string public constant name = "ReservedHotoken";
+    string public constant symbol = "RHTKN";
+    uint8 public constant decimals = 18;
+    uint256 public constant INITIAL_SUPPLY = 3000000000 * (10 ** uint256(decimals));
     uint256 public constant HTKN_PER_ETH = 10;
 
     // Properties
@@ -98,7 +98,7 @@ contract HotokenReservation is StandardToken, Ownable {
         uint256 usdRate = usdRateMap["ETH"];
 
         // calculate token amount to be created
-        uint256 usdAmount = weiAmount.mul(usdRate).div(10 ** uint256(DECIMALS));
+        uint256 usdAmount = weiAmount.mul(usdRate).div(10 ** uint256(decimals));
         uint256 tokens = weiAmount.mul(calculateRate("ETH"));
         bool exists = ledgerMap[msg.sender].length > 0;
 
