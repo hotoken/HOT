@@ -108,100 +108,169 @@ contract('HotokenReservation', function(accounts) {
   })
 })
 
-// contract('HotokenReservation buy token', function(accounts) {
+contract('HotokenReservation buy token', function(accounts) {
 
-//   it('should be able to retrieve 2 ether for contributor that is in the whitelist', async function() {
-//     const instance = await HotokenReservation.deployed()
-//     const user1 = accounts[1]
-//     const rate = (await instance.rate.call()).toNumber()
-//     await instance.addToWhitelist(user1)
+  it('should be able to retrieve ether for contributor that is in the whitelist', async function() {
+    const instance = await HotokenReservation.deployed()
+    const HTKN_PER_ETH = (await instance.HTKN_PER_ETH.call()).toNumber()
+    const discountRate = (await instance.getDiscountRate()).toNumber()
+    const usdRate = (await instance.getUSDRate("ETH")).toNumber()
+    const owner = accounts[0]
+    const user1 = accounts[1]
 
-//     expect((await instance.whitelist.call(user1)).toNumber()).to.be.equal(1)
+    // add to whitelist first
+    await instance.addToWhitelist(user1)
+    expect((await instance.existsInWhitelist(user1)).toNumber()).to.be.equal(1)
 
-//     const amountEther = 2
-//     const amountWei = web3.toWei(amountEther, 'ether')
+    // set mininum purchase from 50k to 10k
+    await instance.setMinimumPurchase(10000)
 
-//     const ownerEtherBefore = (await web3.eth.getBalance(accounts[0])).toNumber()
-//     const tokenSoldBefore = (await instance.tokenSold.call()).toNumber()
+    const amountEther = 40
+    const amountWei = web3.toWei(amountEther, 'ether')
 
-//     await instance.sendTransaction({from: user1, value: amountWei})
-//     const user1BalanceAfter = (await instance.balanceOf(user1)).toNumber()
-//     const ownerEtherAfter = (await web3.eth.getBalance(accounts[0])).toNumber()
-//     const tokenSoldAfter = (await instance.tokenSold.call()).toNumber()
+    const ownerEtherBefore = (await web3.eth.getBalance(owner)).toNumber()
+    const tokenSoldBefore = (await instance.getTokenSold()).toNumber()
 
-//     expect(user1BalanceAfter).to.be.equal(rate * amountWei)
-//     expect(ownerEtherAfter).to.be.above(ownerEtherBefore)
-//     expect(tokenSoldAfter).to.be.equal(Number(tokenSoldBefore + (rate * amountWei)))
+    await instance.sendTransaction({from: user1, value: amountWei})
+    const user1BalanceAfter = (await instance.balanceOf(user1)).toNumber()
+    const ownerEtherAfter = (await web3.eth.getBalance(owner)).toNumber()
+    const tokenSoldAfter = (await instance.getTokenSold()).toNumber()
+
+    expect(user1BalanceAfter).to.be.equal(HTKN_PER_ETH * (100 + discountRate) / 100 * usdRate * amountWei)
+    expect(ownerEtherAfter).to.be.above(ownerEtherBefore)
+    expect(tokenSoldAfter).to.be.equal(Number(tokenSoldBefore + (discountRate + 100) / 100 * HTKN_PER_ETH * usdRate * amountWei))
+  })
+
+  it('should be able to retrieve ether for contributor that already exists in ledger even if amount is less than minimum purchase', async function() {
+    const instance = await HotokenReservation.deployed()
+    const HTKN_PER_ETH = (await instance.HTKN_PER_ETH.call()).toNumber()
+    const discountRate = (await instance.getDiscountRate()).toNumber()
+    const usdRate = (await instance.getUSDRate("ETH")).toNumber()
+    const owner = accounts[0]
+    const user1 = accounts[1]
+
+    // set mininum purchase from 50k to 10k
+    await instance.setMinimumPurchase(10000)
+
+    const amountEther = 1
+    const amountWei = web3.toWei(amountEther, 'ether')
+
+    const ownerEtherBefore = (await web3.eth.getBalance(owner)).toNumber()
+    const tokenSoldBefore = (await instance.getTokenSold()).toNumber()
+    const user1BalanceBefore = (await instance.balanceOf(user1)).toNumber()
+
+    await instance.sendTransaction({from: user1, value: amountWei})
+    const user1BalanceAfter = (await instance.balanceOf(user1)).toNumber()
+    const ownerEtherAfter = (await web3.eth.getBalance(owner)).toNumber()
+    const tokenSoldAfter = (await instance.getTokenSold()).toNumber()
+
+    expect(user1BalanceAfter).to.be.equal(user1BalanceBefore + HTKN_PER_ETH * (100 + discountRate) / 100 * usdRate * amountWei)
+    expect(ownerEtherAfter).to.be.above(ownerEtherBefore)
+    expect(tokenSoldAfter).to.be.equal(Number(tokenSoldBefore + (discountRate + 100) / 100 * HTKN_PER_ETH * usdRate * amountWei))
+  })
+
+  it('should be able to sell token more than supply', async function() {
+    const instance = await HotokenReservation.deployed()
+    const HTKN_PER_ETH = (await instance.HTKN_PER_ETH.call()).toNumber()
+    const discountRate = (await instance.getDiscountRate()).toNumber()
+    const usdRate = (await instance.getUSDRate("ETH")).toNumber()
+    const owner = accounts[0]
+    const user1 = accounts[1]
+
+    // set USD Rate
+    await instance.setUSDRate("ETH", 500000000)
+
+    const amountEther = 40
+    const amountWei = web3.toWei(amountEther, 'ether')
+
+    const tokenSoldBefore = (await instance.getTokenSold()).toNumber()
+    const user1BalanceBefore = (await instance.balanceOf(user1)).toNumber()
+
+    try {
+      await instance.sendTransaction({from: user1, value: amountWei})
+    } catch (e) {
+      expect(e.toString()).to.be.include('revert')
+    }
     
-//   })
+    const user1BalanceAfter = (await instance.balanceOf(user1)).toNumber()
+    const tokenSoldAfter = (await instance.getTokenSold()).toNumber()
 
-//   it('should not be able to retrieve ether from address that it is not in the whitelist', async function() {
-//     const instance = await HotokenReservation.deployed()
+    expect(tokenSoldAfter).to.be.equal(tokenSoldBefore)
+    expect(user1BalanceAfter).to.be.equal(user1BalanceBefore)
+  })
 
-//     const user2 = accounts[2]
-//     const rate = (await instance.rate.call()).toNumber()
-//     expect((await instance.whitelist.call(user2)).toNumber()).to.be.equal(0)
+  it('should not be able to retrieve ether from address that it is not in the whitelist', async function() {
+    const instance = await HotokenReservation.deployed()
 
-//     const amountEther = 2
-//     const amountWei = web3.toWei(amountEther, 'ether')
-//     const tokenSold = (await instance.tokenSold.call()).toNumber()
+    const user2 = accounts[2]
+    expect((await instance.existsInWhitelist(user2)).toNumber()).to.be.equal(0)
 
-//     try {
-//       await instance.sendTransaction({from: user2, value: amountWei})
-//     } catch (e) {
-//       expect(e.toString()).to.be.include('revert')
-//     }
-//     expect(tokenSold).to.be.equal(Number(rate * amountWei))
-//   })
+    const amountEther = 2
+    const amountWei = web3.toWei(amountEther, 'ether')
+    const tokenSoldBefore = (await instance.getTokenSold()).toNumber()
 
-//   it('should not be able to retrieve ether from owner contract address', async function() {
-//     const instance = await HotokenReservation.deployed()
-//     const rate = (await instance.rate.call()).toNumber()
+    try {
+      await instance.sendTransaction({from: user2, value: amountWei})
+    } catch (e) {
+      expect(e.toString()).to.be.include('revert')
+    }
 
-//     const amountEther = 2
-//     const amountWei = web3.toWei(amountEther, 'ether')
+    const tokenSoldAfter = (await instance.getTokenSold()).toNumber()
+    expect(tokenSoldAfter).to.be.equal(tokenSoldBefore)
+  })
 
-//     const ownerEtherBefore = (await web3.eth.getBalance(accounts[0])).toNumber()
-//     const tokenSold = (await instance.tokenSold.call()).toNumber()
+  it('should not be able to retrieve ether from owner contract address', async function() {
+    const instance = await HotokenReservation.deployed()
+    const owner = accounts[0]
 
-//     try {
-//       await instance.sendTransaction({from: accounts[0], value: amountWei})
-//     } catch (e) {
-//       expect(e.toString()).to.be.include('revert')
-//     }
-//     expect(tokenSold).to.be.equal(Number(rate * amountWei))
-//   })
+    const amountEther = 2
+    const amountWei = web3.toWei(amountEther, 'ether')
 
-//   it('should be able to log event if send ether success', async function() {
-//     const instance = await HotokenReservation.deployed()
-//     const user2 = accounts[2]
-//     const rate = (await instance.rate.call()).toNumber()
-//     await instance.addToWhitelist(user2)
+    const ownerEtherBefore = (await web3.eth.getBalance(owner)).toNumber()
+    const tokenSoldBefore = (await instance.getTokenSold()).toNumber()
 
-//     const amountEther = 5
-//     const amountWei = web3.toWei(amountEther, 'ether')
+    try {
+      await instance.sendTransaction({from: owner, value: amountWei})
+    } catch (e) {
+      expect(e.toString()).to.be.include('revert')
+    }
+    const tokenSoldAfter = (await instance.getTokenSold()).toNumber()
+    expect(tokenSoldAfter).to.be.equal(tokenSoldBefore)
+  })
 
-//     const ownerEtherBefore = (await web3.eth.getBalance(accounts[0])).toNumber()
-//     const tokenSoldBefore = (await instance.tokenSold.call()).toNumber()
+  it('should be able to log event if send ether success', async function() {
+    const instance = await HotokenReservation.deployed()
+    const HTKN_PER_ETH = (await instance.HTKN_PER_ETH.call()).toNumber()
+    const discountRate = (await instance.getDiscountRate()).toNumber()
 
-//     const tx = await instance.sendTransaction({from: user2, value: amountWei})
-//     const user2BalanceAfter = (await instance.balanceOf(user2)).toNumber()
-//     const ownerEtherAfter = (await web3.eth.getBalance(accounts[0])).toNumber()
-//     const tokenSoldAfter = (await instance.tokenSold.call()).toNumber()
+    /// set USD Rate
+    await instance.setUSDRate("ETH", 400)
 
-//     expect(user2BalanceAfter).to.be.equal(rate * amountWei)
-//     expect(ownerEtherAfter).to.be.above(ownerEtherBefore)
-//     expect(tokenSoldAfter).to.be.equal(Number(tokenSoldBefore + (rate * amountWei)))
+    const usdRate = (await instance.getUSDRate("ETH")).toNumber()
+    const owner = accounts[0]
+    const user2 = accounts[2]
 
-//     // check events log
-//     expect(tx.logs).to.be.ok
-//     expect(tx.logs[0].event).to.be.equal('TokenPurchase')
-//     expect(tx.logs[0].args.purchaser).to.be.equal(user2)
-//     expect(tx.logs[0].args.beneficiary).to.be.equal(user2)
-//     expect(tx.logs[0].args.value.toNumber()).to.be.equal(Number(amountWei))
-//     expect(tx.logs[0].args.amount.toNumber()).to.be.equal(rate * amountWei)
-//   })
-// })
+    // add to whitelist first
+    await instance.addToWhitelist(user2)
+    expect((await instance.existsInWhitelist(user2)).toNumber()).to.be.equal(1)
+
+    const amountEther = 40
+    const amountWei = web3.toWei(amountEther, 'ether')
+
+    const ownerEtherBefore = (await web3.eth.getBalance(owner)).toNumber()
+    const tokenSoldBefore = (await instance.getTokenSold()).toNumber()
+
+    const tx = await instance.sendTransaction({from: user2, value: amountWei})
+
+    // check events log
+    expect(tx.logs).to.be.ok
+    expect(tx.logs[0].event).to.be.equal('TokenPurchase')
+    expect(tx.logs[0].args.purchaser).to.be.equal(user2)
+    expect(tx.logs[0].args.beneficiary).to.be.equal(user2)
+    expect(tx.logs[0].args.value.toNumber()).to.be.equal(Number(amountWei))
+    expect(tx.logs[0].args.amount.toNumber()).to.be.equal(HTKN_PER_ETH * (100 + discountRate) / 100 * usdRate * amountWei)
+  })
+})
 
 contract('HotokenReservation set discount rate', function(accounts) {
   
@@ -382,4 +451,123 @@ contract('HotokenReservation set pause state', function(accounts) {
     expect(isPauseEnabledAfter).to.be.equal(isPauseEnabledBefore)
   })
 })
-  
+
+contract('HotokenReservation add information to ledger', function(accounts) {
+
+  it('should be able to check address exists in the ledger', async function() {
+    const instance = await HotokenReservation.deployed()
+    const user1 = accounts[1]
+
+    const exists = await instance.existsInLedger(user1)
+    expect(exists).to.be.false
+  })
+
+  it('should be able to add address information in the ledger', async function() {
+    const instance = await HotokenReservation.deployed()
+    const user1 = accounts[1]
+    const amount = 100000
+
+    await instance.addToLedger(user1, "ETH", amount, 20000)
+    const exists = await instance.existsInLedger(user1)
+    expect(exists).to.be.true
+  })
+
+  it('should not be able to add address information in the ledger if not call by owner', async function() {
+    const instance = await HotokenReservation.deployed()
+    const user1 = accounts[1]
+    const user2 = accounts[2]
+    const amount = 100000
+
+    try {
+      await instance.addToLedger(user2, "ETH", amount, 20000, {from: user1})
+    } catch (e) {
+      expect(e.toString()).to.be.include('revert')
+    }
+    const exists = await instance.existsInLedger(user2)
+    expect(exists).to.be.false
+  })
+
+  it('should not be able to add address information in the ledger that currency is not in usd rate map', async function() {
+    const instance = await HotokenReservation.deployed()
+    const user2 = accounts[2]
+    const amount = 100000
+
+    try {
+      await instance.addToLedger(user2, "LTC", amount, 20000)
+    } catch (e) {
+      expect(e.toString()).to.be.include('revert')
+    }
+    const exists = await instance.existsInLedger(user2)
+    expect(exists).to.be.false
+  })
+
+  it('should not be able to add owner address information in the ledger', async function() {
+    const instance = await HotokenReservation.deployed()
+    const owner = accounts[0]
+    const amount = 100000
+
+    try {
+      await instance.addToLedger(owner, "ETH", amount, 20000)
+    } catch (e) {
+      expect(e.toString()).to.be.include('revert')
+    }
+    const exists = await instance.existsInLedger(owner)
+    expect(exists).to.be.false
+  })
+})
+
+contract('HotokenReservation transfer token', function(accounts) {
+
+  it('should be able to transfer token', async function() {
+    const instance = await HotokenReservation.deployed()
+    const user1 = accounts[1]
+    await instance.setPauseEnabled(true)
+
+    await instance.transfer(user1, 1000)
+    expect((await instance.balanceOf(user1)).toNumber()).to.be.equal(1000)
+  })
+
+  it('should not be able transfer token by not owner address', async function() {
+    const instance = await HotokenReservation.deployed()
+    const user1 = accounts[1]
+    const user2 = accounts[2]
+
+    try {
+      await instance.transfer(user2, 1000, {from: user1})
+    } catch (e) {
+      expect(e.toString()).to.be.include('revert')
+    }
+  })
+
+  it('should not be able transfer token to 0x address', async function() {
+    const instance = await HotokenReservation.deployed()
+
+    try {
+      await instance.transfer("0x0", 1000)
+    } catch (e) {
+      expect(e.toString()).to.be.include('revert')
+    }
+  })
+
+  it('should not be able transfer token to owner contract itself', async function() {
+    const instance = await HotokenReservation.deployed()
+
+    try {
+      await instance.transfer(accounts[0], 1000)
+    } catch (e) {
+      expect(e.toString()).to.be.include('revert')
+    }
+  })
+
+  it('should not be able to transfer token when pause is enabled', async function() {
+    const instance = await HotokenReservation.deployed()
+    const user1 = accounts[1]
+    await instance.setPauseEnabled(false)
+
+    try {
+      await instance.transfer(user1, 1000)
+    } catch (e) {
+      expect(e.toString()).to.be.include('revert')
+    }
+  })
+})  

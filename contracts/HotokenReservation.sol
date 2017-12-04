@@ -3,10 +3,14 @@ pragma solidity ^0.4.17;
 import './token/StandardToken.sol';
 import './ownership/Ownable.sol';
 import './math/SafeMath.sol';
+// import './string/Strings.sol';
+// import './string/StringUtils.sol';
 
 contract HotokenReservation is StandardToken, Ownable {
     
     using SafeMath for uint256;
+    // using Strings for *;
+    // using StringUtils for *;
 
     // Constants
     string public constant NAME = "ReservedHotoken";
@@ -37,7 +41,7 @@ contract HotokenReservation is StandardToken, Ownable {
 
     // Mapping
     mapping(address=>uint) public whitelist;
-    mapping(address=>Ledger) public ledgerMap;
+    mapping(address=>Ledger[]) public ledgerMap;
     mapping(address=>uint) claimTokenMap;
     mapping(string=>uint) usdRateMap;
 
@@ -90,24 +94,40 @@ contract HotokenReservation is StandardToken, Ownable {
     }
 
     function buyTokens(address beneficiary) public payable onlyWhenPauseDisabled {
+        uint256 weiAmount = msg.value;
+        uint256 usdRate = usdRateMap["ETH"];
+
+        // calculate token amount to be created
+        uint256 usdAmount = weiAmount.mul(usdRate).div(10 ** uint256(DECIMALS));
+        uint256 tokens = weiAmount.mul(calculateRate("ETH"));
+        bool exists = ledgerMap[msg.sender].length > 0;
+
+        // check tokens more than supply or not
+        uint256 exceedSupply = tokenSold.add(tokens);
+
         require(beneficiary != address(0));
         require(owner != beneficiary);
         require(whitelist[beneficiary] == 1);
+        
+        if ((minimumPurchase <= usdAmount) || exists) {
+            require(exceedSupply <= totalSupply);
+            // update state
+            tokenSold = tokenSold.add(tokens);
 
-        uint256 weiAmount = msg.value;
-        // calculate token amount to be created
-        uint256 tokens = weiAmount.mul(calculateRate("ETH"));
+            // transfer token to purchaser
+            uint currentBalance = balances[beneficiary];
+            balances[beneficiary] = currentBalance.add(tokens);
 
-        // update state
-        tokenSold = tokenSold.add(tokens);
+            owner.transfer(weiAmount);
+            TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
+            addToLedgerAfterSell(beneficiary, "ETH", weiAmount, tokens);
+        } else {
+            revert();
+        }
+    }
 
-        // transfer token to purchaser
-        require(tokenSold <= totalSupply);
-        uint currentBalance = balances[beneficiary];
-        balances[beneficiary] = currentBalance.add(tokens);
-
-        owner.transfer(weiAmount);
-        TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
+    function getTokenSold() external view returns (uint) {
+        return tokenSold;
     }
 
     // Whitelist manipulate function
@@ -134,6 +154,58 @@ contract HotokenReservation is StandardToken, Ownable {
     function existsInWhitelist(address _address) external view returns (uint) {
         return whitelist[_address];
     }
+
+    /**
+    * add information of buyer to ledger
+    * @param _address address of buyer
+    * @param _currency currency that buyer spent
+    * @param _amount amount of the currency
+    * @param _tokens amount of tokens
+    */
+    function addToLedger(address _address, string _currency, uint _amount, uint _tokens) public onlyOwner {
+        // need to check amount in case that currency is not ETH
+        require(_address != owner);
+        require(usdRateMap[_currency] > 0);
+        uint _currentTime = now;
+        uint _usdRate = usdRateMap[_currency];
+        uint _discount = getDiscountRate();
+
+        ledgerMap[_address].push(Ledger(_currentTime, _currency, _amount, _usdRate, _discount, _tokens));
+    }
+
+    function addToLedgerAfterSell(address _address, string _currency, uint _amount, uint _tokens) internal {
+        // need to check amount in case that currency is not ETH
+        require(_address != owner);
+        require(usdRateMap[_currency] > 0);
+        uint _currentTime = now;
+        uint _usdRate = usdRateMap[_currency];
+        uint _discount = getDiscountRate();
+
+        ledgerMap[_address].push(Ledger(_currentTime, _currency, _amount, _usdRate, _discount, _tokens));
+    }
+
+    function existsInLedger(address _address) public view returns (bool) {
+        return ledgerMap[_address].length > 0;
+    }
+
+    // function getLedger(address _address) public view onlyOwner returns (string) {
+        // require(existsInLedger(_address));
+        // string ledgerCSV;
+
+        // for (uint i = 0; i < ledgerMap[_address].length; i++) {
+        //     var parts = new Strings.slice[](6);    
+        //     Ledger ledger = ledgerMap[_address][i];
+        //     parts[0] = StringUtils.uintToBytes(ledger.datetime).toSliceB32();
+        //     parts[1] = ledger.currency.toSlice();
+        //     parts[2] = StringUtils.uintToBytes(ledger.quantity).toSliceB32();
+        //     parts[3] = StringUtils.uintToBytes(ledger.usdRate).toSliceB32();
+        //     parts[4] = StringUtils.uintToBytes(ledger.discount).toSliceB32();
+        //     parts[5] = StringUtils.uintToBytes(ledger.tokenQuantity).toSliceB32();
+        //     ledgerCSV = ledgerCSV.toSlice().concat(",".toSlice().join(parts).toSlice());
+        // }
+        // return ledgerCSV;
+    // }
+
 
     /**
     * set pause state for preventing sale from buyers
