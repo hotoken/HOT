@@ -3,14 +3,12 @@ pragma solidity ^0.4.17;
 import './token/StandardToken.sol';
 import './ownership/Ownable.sol';
 import './math/SafeMath.sol';
-// import './string/Strings.sol';
-// import './string/StringUtils.sol';
+import './utils/strings.sol';
 
 contract HotokenReservation is StandardToken, Ownable {
     
     using SafeMath for uint256;
-    // using Strings for *;
-    // using StringUtils for *;
+    using strings for *;
 
     // Constants
     string public constant name = "ReservedHotoken";
@@ -180,23 +178,34 @@ contract HotokenReservation is StandardToken, Ownable {
         return ledgerMap[_address].length > 0;
     }
 
-    // function getLedger(address _address) public view onlyOwner returns (string) {
-        // require(existsInLedger(_address));
-        // string ledgerCSV;
+    function getLedgerInformation(address _address) public view onlyOwner returns (string) {
+        require(existsInLedger(_address));
+        var ledgerCSV = new strings.slice[](ledgerMap[_address].length + uint(1));
 
-        // for (uint i = 0; i < ledgerMap[_address].length; i++) {
-        //     var parts = new Strings.slice[](6);    
-        //     Ledger ledger = ledgerMap[_address][i];
-        //     parts[0] = StringUtils.uintToBytes(ledger.datetime).toSliceB32();
-        //     parts[1] = ledger.currency.toSlice();
-        //     parts[2] = StringUtils.uintToBytes(ledger.quantity).toSliceB32();
-        //     parts[3] = StringUtils.uintToBytes(ledger.usdRate).toSliceB32();
-        //     parts[4] = StringUtils.uintToBytes(ledger.discount).toSliceB32();
-        //     parts[5] = StringUtils.uintToBytes(ledger.tokenQuantity).toSliceB32();
-        //     ledgerCSV = ledgerCSV.toSlice().concat(",".toSlice().join(parts).toSlice());
-        // }
-        // return ledgerCSV;
-    // }
+        // add header for csv
+        var headers = new strings.slice[](6);
+        headers[0] = "datetime".toSlice();
+        headers[1] = "currency".toSlice();
+        headers[2] = "currency_quantity".toSlice();
+        headers[3] = "usd_rate".toSlice();
+        headers[4] = "discount_rate".toSlice();
+        headers[5] = "token_quantity".toSlice();
+        ledgerCSV[0] = ",".toSlice().join(headers).toSlice();
+        
+        for (uint i = 0; i < ledgerMap[_address].length; i++) {
+            var parts = new strings.slice[](6);    
+            Ledger ledger = ledgerMap[_address][i];
+            parts[0] = strings.uintToBytes(ledger.datetime).toSliceB32();
+            parts[1] = ledger.currency.toSlice();
+            parts[2] = strings.uintToBytes(ledger.quantity).toSliceB32();
+            parts[3] = strings.uintToBytes(ledger.usdRate).toSliceB32();
+            parts[4] = strings.uintToBytes(ledger.discount).toSliceB32();
+            parts[5] = strings.uintToBytes(ledger.tokenQuantity).toSliceB32();
+            ledgerCSV[i + 1] = ",".toSlice().join(parts).toSlice();
+        }
+
+        return "\n".toSlice().join(ledgerCSV);
+    }
 
 
     /**

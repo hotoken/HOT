@@ -597,6 +597,53 @@ contract('HotokenReservation add information to ledger', function(accounts) {
     const exists = await instance.existsInLedger(owner)
     expect(exists).to.be.false
   })
+
+  it('should be able to get ledger information', async function() {
+    const instance = await HotokenReservation.deployed()
+    const owner = accounts[0]
+    const user1 = accounts[1]
+
+    await instance.setPause(false)
+    await instance.addToWhitelist(user1)
+
+    // set mininum purchase from 50k to 10
+    await instance.setMinimumPurchase(100)
+
+    const amountEther = 1
+    const amountWei = web3.toWei(amountEther, 'ether')
+
+    await instance.sendTransaction({from: user1, value: amountWei})
+
+    const ledgerInformation = await instance.getLedgerInformation(user1)
+    expect(ledgerInformation).to.be.ok
+    expect(ledgerInformation).to.be.include('datetime,currency,currency_quantity,usd_rate,discount_rate,token_quantity')
+    expect(ledgerInformation).to.be.include(',ETH,100000,400,0,20000')
+    expect(ledgerInformation).to.be.include(',ETH,100000,400,0,20000')
+  })
+
+  it('should not be able to get ledger information if address is not exists in ledger', async function() {
+    const instance = await HotokenReservation.deployed()
+    const owner = accounts[0]
+    const user2 = accounts[2]
+
+    try {
+      const ledgerInformation = await instance.getLedgerInformation(user2)
+    } catch (e) {
+      expect(e.toString()).to.be.include('revert')
+    }
+  })
+
+  it('should not be able to get ledger information if not call by contract owner', async function() {
+    const instance = await HotokenReservation.deployed()
+    const owner = accounts[0]
+    const user1 = accounts[1]
+
+    try {
+      const ledgerInformation = await instance.getLedgerInformation(user1, {from: user1})
+    } catch (e) {
+      expect(e.toString()).to.be.include('revert')
+    }
+  })
 })
 
 contract('HotokenReservation transfer token', function(accounts) {
@@ -717,7 +764,6 @@ contract('HotokenReservation claim tokens', function(accounts) {
       expect(e.toString()).to.be.include('revert')
     }
   })
-
 
   it('should be able to get newAddress that map with the sender address', async function() {
     const instance = await HotokenReservation.deployed()
