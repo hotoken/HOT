@@ -273,6 +273,14 @@ contract HotokenReservation is StandardToken, Ownable {
         claimTokenMap[msg.sender] = _address;
     }
 
+    function getAddressfromClaimTokens() public view returns (string) {
+        return claimTokenMap[msg.sender];
+    }
+
+    function alreadyClaimTokens() public view returns (bool) {
+        return bytes(claimTokenMap[msg.sender]).length > 0;
+    }
+
     function transfer(address _to, uint256 _value) public onlyOwner validDestination(_to) returns (bool) {
         return super.transfer(_to, _value);
     }
