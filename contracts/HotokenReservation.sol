@@ -99,7 +99,7 @@ contract HotokenReservation is StandardToken, Ownable {
 
         // calculate token amount to be created
         uint256 usdAmount = weiAmount.mul(usdRate).div(10 ** uint256(decimals));
-        uint256 tokens = weiAmount.mul(calculateRate("ETH"));
+        uint256 tokens = weiAmount.mul(calculateRate("ETH")).div(10 ** uint(2));
         bool exists = ledgerMap[msg.sender].length > 0;
 
         // check tokens more than supply or not
@@ -247,7 +247,8 @@ contract HotokenReservation is StandardToken, Ownable {
     function calculateRate(string _currency) internal view returns (uint) {
         uint _discountRate = getDiscountRate();
         uint usdRate = usdRateMap[_currency];
-        return (_discountRate.add(uint(100)).div(uint(100))).mul(HTKN_PER_ETH).mul(usdRate);
+
+        return _discountRate.add(10 ** uint(2)).mul(HTKN_PER_ETH).mul(usdRate);
     }
 
 
