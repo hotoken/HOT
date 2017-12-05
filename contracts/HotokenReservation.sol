@@ -22,7 +22,6 @@ contract HotokenReservation is StandardToken, Ownable {
     // Properties
     uint256 public tokenSold;
     bool    public pause = true;
-    bool    public transferEnabled = false;
     uint256 public minimumPurchase;
 
     // Struct
@@ -36,13 +35,13 @@ contract HotokenReservation is StandardToken, Ownable {
     }
 
     // Enum
-    enum DiscountRate {ZERO, TEN, TWENTY, THIRTY}
+    enum DiscountRate {ZERO, TWENTY_FIVE, FOURTY_FIVE, SIXTY_FIVE}
     DiscountRate discountRate;
 
     // Mapping
     mapping(address=>uint) public whitelist;
     mapping(address=>Ledger[]) public ledgerMap;
-    mapping(address=>uint) claimTokenMap;
+    mapping(address=>string) claimTokenMap;
     mapping(string=>uint) usdRateMap;
 
     // Events
@@ -59,13 +58,6 @@ contract HotokenReservation is StandardToken, Ownable {
     modifier validDestination(address _to) {
         require(_to != address(0x0));
         require(_to != owner);
-        _;
-    }
-
-    modifier onlyWhenTransferEnabled() {
-        if (!transferEnabled) {
-            require(msg.sender == owner);
-        }
         _;
     }
 
@@ -220,28 +212,20 @@ contract HotokenReservation is StandardToken, Ownable {
     }
 
     /**
-    * set transfer state for preventing anyone can transfer before set it true
-    * @param _transfer boolean
-    */
-    function setTransfer(bool _transfer) public onlyOwner {
-        transferEnabled = _transfer;
-    }
-
-    function isTransfer() external view returns (bool) {
-        return transferEnabled;
-    }
-
-    /**
     * set discount rate via contract owner
     * @param _rate discount rate [0, 1, 2, 3]
     */
     function setDiscountRate(uint _rate) public onlyOwner {
-        require(uint(DiscountRate.THIRTY) >= _rate);
+        require(uint(DiscountRate.SIXTY_FIVE) >= _rate);
         discountRate = DiscountRate(_rate);
     }
 
     function getDiscountRate() public view returns (uint) {
-        return uint(discountRate).mul(uint(10));
+        uint256 _discountRate = uint(discountRate);
+        if (_discountRate == 0) {
+            return _discountRate;
+        }
+        return _discountRate.mul(uint(20)).add(uint(5));
     }
 
     function calculateRate(string _currency) internal view returns (uint) {
@@ -278,12 +262,22 @@ contract HotokenReservation is StandardToken, Ownable {
         return minimumPurchase;
     }
 
+    /**
+    * Claim Tokens
+    * @param _address address for sending token to
+    */
+    function claimTokens(string _address) public {
+        require(msg.sender != owner);
+        require(whitelist[msg.sender] == 1);
+        require(ledgerMap[msg.sender].length > 0);
+        claimTokenMap[msg.sender] = _address;
+    }
 
-    function transfer(address _to, uint256 _value) public onlyWhenTransferEnabled validDestination(_to) returns (bool) {
+    function transfer(address _to, uint256 _value) public onlyOwner validDestination(_to) returns (bool) {
         return super.transfer(_to, _value);
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) public onlyWhenTransferEnabled validDestination(_to) returns (bool) {
+    function transferFrom(address _from, address _to, uint256 _value) public onlyOwner validDestination(_to) returns (bool) {
         return super.transferFrom(_from, _to, _value);
     }
 

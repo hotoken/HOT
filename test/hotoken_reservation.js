@@ -139,9 +139,49 @@ contract('HotokenReservation buy token', function(accounts) {
     const ownerEtherAfter = (await web3.eth.getBalance(owner)).toNumber()
     const tokenSoldAfter = (await instance.getTokenSold()).toNumber()
 
-    expect(user1BalanceAfter).to.be.equal(HTKN_PER_ETH * (100 + discountRate) / 100 * usdRate * amountWei)
+    expect(user1BalanceAfter).to.be.equal(160000000000000000000000)
     expect(ownerEtherAfter).to.be.above(ownerEtherBefore)
-    expect(tokenSoldAfter).to.be.equal(Number(tokenSoldBefore + (discountRate + 100) / 100 * HTKN_PER_ETH * usdRate * amountWei))
+    expect(tokenSoldAfter).to.be.equal(Number(tokenSoldBefore + 160000000000000000000000))
+  })
+
+  it('check the tokens that user received, it comes from correct calculation', async function() {
+    const instance = await HotokenReservation.deployed()
+    const HTKN_PER_ETH = (await instance.HTKN_PER_ETH.call()).toNumber()
+    const discountRateBefore = (await instance.getDiscountRate()).toNumber()
+    const usdRate = (await instance.getUSDRate("ETH")).toNumber()
+    const owner = accounts[0]
+    const user4 = accounts[4]
+
+    expect(discountRateBefore).to.be.equal(0)
+
+    // set pause to false
+    await instance.setPause(false)
+    await instance.setDiscountRate(3)
+    const discountRateAfter = (await instance.getDiscountRate()).toNumber()
+    expect(discountRateAfter).to.be.equal(65)
+
+    // add to whitelist first
+    await instance.addToWhitelist(user4)
+    expect((await instance.existsInWhitelist(user4)).toNumber()).to.be.equal(1)
+
+    // set mininum purchase from 50k to 10k
+    await instance.setMinimumPurchase(1000)
+
+    const amountEther = 3
+    const amountWei = web3.toWei(amountEther, 'ether')
+
+    const ownerEtherBefore = (await web3.eth.getBalance(owner)).toNumber()
+    const tokenSoldBefore = (await instance.getTokenSold()).toNumber()
+    const user4BalanceBefore = (await instance.balanceOf(user4)).toNumber()
+
+    await instance.sendTransaction({from: user4, value: amountWei})
+    const user4BalanceAfter = (await instance.balanceOf(user4)).toNumber()
+    const ownerEtherAfter = (await web3.eth.getBalance(owner)).toNumber()
+    const tokenSoldAfter = (await instance.getTokenSold()).toNumber()
+
+    expect(user4BalanceAfter).to.be.equal(19800000000000000000000)
+    expect(ownerEtherAfter).to.be.above(ownerEtherBefore)
+    expect(tokenSoldAfter).to.be.equal(tokenSoldBefore + 19800000000000000000000)
   })
 
   it('should be able to retrieve ether for contributor that already exists in ledger even if amount is less than minimum purchase', async function() {
@@ -151,6 +191,10 @@ contract('HotokenReservation buy token', function(accounts) {
     const usdRate = (await instance.getUSDRate("ETH")).toNumber()
     const owner = accounts[0]
     const user1 = accounts[1]
+
+    await instance.setDiscountRate(2)
+    const discountRateAfter = (await instance.getDiscountRate()).toNumber()
+    expect(discountRateAfter).to.be.equal(45)
 
     // set mininum purchase from 50k to 10k
     await instance.setMinimumPurchase(10000)
@@ -167,9 +211,9 @@ contract('HotokenReservation buy token', function(accounts) {
     const ownerEtherAfter = (await web3.eth.getBalance(owner)).toNumber()
     const tokenSoldAfter = (await instance.getTokenSold()).toNumber()
 
-    expect(user1BalanceAfter).to.be.equal(user1BalanceBefore + HTKN_PER_ETH * (100 + discountRate) / 100 * usdRate * amountWei)
+    expect(user1BalanceAfter).to.be.equal(user1BalanceBefore + 5800000000000000000000)
     expect(ownerEtherAfter).to.be.above(ownerEtherBefore)
-    expect(tokenSoldAfter).to.be.equal(Number(tokenSoldBefore + (discountRate + 100) / 100 * HTKN_PER_ETH * usdRate * amountWei))
+    expect(tokenSoldAfter).to.be.equal(Number(tokenSoldBefore + 5800000000000000000000))
   })
 
   it('should be able to sell token more than supply', async function() {
@@ -310,8 +354,20 @@ contract('HotokenReservation set discount rate', function(accounts) {
   it('should be able to set discount by contract owner', async function() {
     const instance = await HotokenReservation.deployed()
     await instance.setDiscountRate(3)
-    const discountRate = (await instance.getDiscountRate()).toNumber()
-    expect(discountRate).to.be.equal(30)
+    let discountRate = (await instance.getDiscountRate()).toNumber()
+    expect(discountRate).to.be.equal(65)
+
+    await instance.setDiscountRate(2)
+    discountRate = (await instance.getDiscountRate()).toNumber()
+    expect(discountRate).to.be.equal(45)
+
+    await instance.setDiscountRate(1)
+    discountRate = (await instance.getDiscountRate()).toNumber()
+    expect(discountRate).to.be.equal(25)
+
+    await instance.setDiscountRate(0)
+    discountRate = (await instance.getDiscountRate()).toNumber()
+    expect(discountRate).to.be.equal(0)
   })
 
   it('should not be able to set discount that more than 30%', async function() {
@@ -322,8 +378,8 @@ contract('HotokenReservation set discount rate', function(accounts) {
       expect(e.toString()).to.be.include('revert')
     }
     const discountRate = (await instance.getDiscountRate()).toNumber()
-    // should be the same as above that we set to 30%
-    expect(discountRate).to.be.equal(30)
+    // should be the same as above that we set to 0%
+    expect(discountRate).to.be.equal(0)
   })
 
   it('should not be able to set discount if not call by contract owner', async function() {
@@ -598,37 +654,3 @@ contract('HotokenReservation transfer token', function(accounts) {
     }
   })
 })  
-
-contract('HotokenReservation set transfer enable state', function(accounts) {
-  
-    it('should have initial value for transfer enable state after contract deployed', async function() {
-      const instance = await HotokenReservation.deployed()
-      const isTransfer = (await instance.isTransfer())
-      expect(isTransfer).to.be.false
-    })
-  
-    it('should be able to set transfer enable state', async function() {
-      const instance = await HotokenReservation.deployed()
-      const isTransferBefore = (await instance.isTransfer())
-      expect(isTransferBefore).to.be.false
-  
-      await instance.setTransfer(true)
-      const isTransferAfter = (await instance.isTransfer())
-      expect(isTransferAfter).to.be.not.equal(isTransferBefore)
-      expect(isTransferAfter).to.be.true
-    })
-  
-    it('should not be able to set transfer enable state if not call by contract owner', async function() {
-      const instance = await HotokenReservation.deployed()
-      const isTransferBefore = (await instance.isTransfer())
-      const user1 = accounts[1]
-  
-      try {
-        await instance.setTransfer(false, {from: user1})
-      } catch (e) {
-        expect(e.toString()).to.be.include('revert')
-      }
-      const isTransferAfter = (await instance.isTransfer())
-      expect(isTransferAfter).to.be.equal(isTransferBefore)
-    })
-  })
