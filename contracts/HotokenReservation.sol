@@ -21,7 +21,7 @@ contract HotokenReservation is StandardToken, Ownable {
 
     // Properties
     uint256 public tokenSold;
-    bool    public pauseEnabled = false;
+    bool    public pause = true;
     bool    public transferEnabled = false;
     uint256 public minimumPurchase;
 
@@ -70,7 +70,7 @@ contract HotokenReservation is StandardToken, Ownable {
     }
 
     modifier onlyWhenPauseDisabled() {
-        require(!pauseEnabled);
+        require(!pause);
         _;
     }
     
@@ -209,14 +209,26 @@ contract HotokenReservation is StandardToken, Ownable {
 
     /**
     * set pause state for preventing sale from buyers
-    * @param _pauseEnabled boolean
+    * @param _pause boolean
     */
-    function setPauseEnabled(bool _pauseEnabled) public onlyOwner {
-        pauseEnabled = _pauseEnabled;
+    function setPause(bool _pause) public onlyOwner {
+        pause = _pause;
     }
 
-    function isPauseEnabled() external view returns (bool) {
-        return pauseEnabled;
+    function isPause() external view returns (bool) {
+        return pause;
+    }
+
+    /**
+    * set transfer state for preventing anyone can transfer before set it true
+    * @param _transfer boolean
+    */
+    function setTransfer(bool _transfer) public onlyOwner {
+        transferEnabled = _transfer;
+    }
+
+    function isTransfer() external view returns (bool) {
+        return transferEnabled;
     }
 
     /**

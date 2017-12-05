@@ -118,6 +118,9 @@ contract('HotokenReservation buy token', function(accounts) {
     const owner = accounts[0]
     const user1 = accounts[1]
 
+    // set pause to false
+    await instance.setPause(false)
+
     // add to whitelist first
     await instance.addToWhitelist(user1)
     expect((await instance.existsInWhitelist(user1)).toNumber()).to.be.equal(1)
@@ -218,10 +221,34 @@ contract('HotokenReservation buy token', function(accounts) {
     const tokenSoldAfter = (await instance.getTokenSold()).toNumber()
     expect(tokenSoldAfter).to.be.equal(tokenSoldBefore)
   })
+  
+  it('should not be able to retrieve ether if contract is paused', async function() {
+    const instance = await HotokenReservation.deployed()
+
+    const user1 = accounts[1]
+    expect((await instance.existsInWhitelist(user1)).toNumber()).to.be.equal(1)
+
+    await instance.setPause(true)
+
+    const amountEther = 2
+    const amountWei = web3.toWei(amountEther, 'ether')
+    const tokenSoldBefore = (await instance.getTokenSold()).toNumber()
+
+    try {
+      await instance.sendTransaction({from: user1, value: amountWei})
+    } catch (e) {
+      expect(e.toString()).to.be.include('revert')
+    }
+
+    const tokenSoldAfter = (await instance.getTokenSold()).toNumber()
+    expect(tokenSoldAfter).to.be.equal(tokenSoldBefore)
+  })
 
   it('should not be able to retrieve ether from owner contract address', async function() {
     const instance = await HotokenReservation.deployed()
     const owner = accounts[0]
+
+    await instance.setPause(false)
 
     const amountEther = 2
     const amountWei = web3.toWei(amountEther, 'ether')
@@ -422,33 +449,33 @@ contract('HotokenReservation set pause state', function(accounts) {
 
   it('should have initial value for pause state after contract deployed', async function() {
     const instance = await HotokenReservation.deployed()
-    const isPauseEnabled = (await instance.isPauseEnabled())
-    expect(isPauseEnabled).to.be.false
+    const isPause = (await instance.isPause())
+    expect(isPause).to.be.true
   })
 
   it('should be able to set pause state', async function() {
     const instance = await HotokenReservation.deployed()
-    const isPauseEnabledBefore = (await instance.isPauseEnabled())
-    expect(isPauseEnabledBefore).to.be.false
+    const isPauseBefore = (await instance.isPause())
+    expect(isPauseBefore).to.be.true
 
-    await instance.setPauseEnabled(true)
-    const isPauseEnabledAfter = (await instance.isPauseEnabled())
-    expect(isPauseEnabledAfter).to.be.not.equal(isPauseEnabledBefore)
-    expect(isPauseEnabledAfter).to.be.true
+    await instance.setPause(false)
+    const isPauseAfter = (await instance.isPause())
+    expect(isPauseAfter).to.be.not.equal(isPauseBefore)
+    expect(isPauseAfter).to.be.false
   })
 
   it('should not be able to set pause state if not call by contract owner', async function() {
     const instance = await HotokenReservation.deployed()
-    const isPauseEnabledBefore = (await instance.isPauseEnabled())
+    const isPauseBefore = (await instance.isPause())
     const user1 = accounts[1]
 
     try {
-      await instance.setPauseEnabled(true)
+      await instance.setPause(true, {from: user1})
     } catch (e) {
       expect(e.toString()).to.be.include('revert')
     }
-    const isPauseEnabledAfter = (await instance.isPauseEnabled())
-    expect(isPauseEnabledAfter).to.be.equal(isPauseEnabledBefore)
+    const isPauseAfter = (await instance.isPause())
+    expect(isPauseAfter).to.be.equal(isPauseBefore)
   })
 })
 
@@ -521,7 +548,7 @@ contract('HotokenReservation transfer token', function(accounts) {
   it('should be able to transfer token', async function() {
     const instance = await HotokenReservation.deployed()
     const user1 = accounts[1]
-    await instance.setPauseEnabled(true)
+    await instance.setPause(true)
 
     await instance.transfer(user1, 1000)
     expect((await instance.balanceOf(user1)).toNumber()).to.be.equal(1000)
@@ -559,10 +586,10 @@ contract('HotokenReservation transfer token', function(accounts) {
     }
   })
 
-  it('should not be able to transfer token when pause is enabled', async function() {
+  it('should not be able to transfer token when pause is disabled', async function() {
     const instance = await HotokenReservation.deployed()
     const user1 = accounts[1]
-    await instance.setPauseEnabled(false)
+    await instance.setPause(false)
 
     try {
       await instance.transfer(user1, 1000)
@@ -571,3 +598,37 @@ contract('HotokenReservation transfer token', function(accounts) {
     }
   })
 })  
+
+contract('HotokenReservation set transfer enable state', function(accounts) {
+  
+    it('should have initial value for transfer enable state after contract deployed', async function() {
+      const instance = await HotokenReservation.deployed()
+      const isTransfer = (await instance.isTransfer())
+      expect(isTransfer).to.be.false
+    })
+  
+    it('should be able to set transfer enable state', async function() {
+      const instance = await HotokenReservation.deployed()
+      const isTransferBefore = (await instance.isTransfer())
+      expect(isTransferBefore).to.be.false
+  
+      await instance.setTransfer(true)
+      const isTransferAfter = (await instance.isTransfer())
+      expect(isTransferAfter).to.be.not.equal(isTransferBefore)
+      expect(isTransferAfter).to.be.true
+    })
+  
+    it('should not be able to set transfer enable state if not call by contract owner', async function() {
+      const instance = await HotokenReservation.deployed()
+      const isTransferBefore = (await instance.isTransfer())
+      const user1 = accounts[1]
+  
+      try {
+        await instance.setTransfer(false, {from: user1})
+      } catch (e) {
+        expect(e.toString()).to.be.include('revert')
+      }
+      const isTransferAfter = (await instance.isTransfer())
+      expect(isTransferAfter).to.be.equal(isTransferBefore)
+    })
+  })
