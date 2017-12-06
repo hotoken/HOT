@@ -36,6 +36,8 @@ contract HotokenReservation is StandardToken, Ownable {
     uint256 public tokenSold;
     bool    public pause = true;
     uint256 public minimumPurchase;
+    bool    public saleFinished = false;
+    uint256 public minimumSold;
     Whitelist[] public whiteListInfo;
 
     // Enum
@@ -57,6 +59,7 @@ contract HotokenReservation is StandardToken, Ownable {
     * @param amount amount of tokens purchased
     */
     event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+    event Burn(address indexed burner, uint256 value);
 
     // Modifiers
     modifier validDestination(address _to) {
@@ -69,27 +72,33 @@ contract HotokenReservation is StandardToken, Ownable {
         require(!pause);
         _;
     }
+
+    modifier onlySaleIsNotFinished() {
+        require(!saleFinished);
+        _;
+    } 
     
     function HotokenReservation() public {
         totalSupply = INITIAL_SUPPLY;
         balances[msg.sender] = INITIAL_SUPPLY;
 
         tokenSold = 0;
-        discountRate = DiscountRate.ZERO;
+        discountRate = DiscountRate.SIXTY_FIVE;
 
         usdRateMap["ETH"] = 4 * (10 ** uint(2));
         usdRateMap["USD"] = 1;
         usdRateMap["BTC"] = 11 * (10 ** uint(3));
 
-        minimumPurchase = 5 * (10 ** uint(4));
+        minimumPurchase = 3 * (10 ** uint(2));
+        minimumSold = 2 * (10 ** uint(6));
     }
 
     // fallback function can be used to buy tokens
-    function () external payable onlyWhenPauseDisabled {
+    function () external payable onlyWhenPauseDisabled onlySaleIsNotFinished {
         buyTokens(msg.sender);
     }
 
-    function buyTokens(address beneficiary) public payable onlyWhenPauseDisabled {
+    function buyTokens(address beneficiary) public payable onlyWhenPauseDisabled onlySaleIsNotFinished {
         uint256 weiAmount = msg.value;
         uint256 usdRate = usdRateMap["ETH"];
 
@@ -106,7 +115,7 @@ contract HotokenReservation is StandardToken, Ownable {
         require(whitelist[beneficiary] == 1);
         
         if ((minimumPurchase <= usdAmount) || exists) {
-            require(exceedSupply <= totalSupply);
+            require(exceedSupply <= INITIAL_SUPPLY);
             // update state
             tokenSold = tokenSold.add(tokens);
 
@@ -127,19 +136,19 @@ contract HotokenReservation is StandardToken, Ownable {
     }
 
     // Whitelist manipulate function
-    function addToWhitelist(address _newAddress) public onlyOwner {
+    function addToWhitelist(address _newAddress) public onlyOwner onlySaleIsNotFinished {
         whitelist[_newAddress] = 1;
         whiteListInfo.push(Whitelist(_newAddress, 1));
     }
 
-    function addManyToWhitelist(address[] _newAddresses) public onlyOwner {
+    function addManyToWhitelist(address[] _newAddresses) public onlyOwner onlySaleIsNotFinished {
         for (uint i = 0; i < _newAddresses.length; i++) {
             whitelist[_newAddresses[i]] = 1;
             whiteListInfo.push(Whitelist(_newAddresses[i], 1));
         }
     }
 
-    function removeFromWhiteList(address _address) public onlyOwner {
+    function removeFromWhiteList(address _address) public onlyOwner onlySaleIsNotFinished {
         whitelist[_address] = 0;
 
         for(uint i = 0; i < whiteListInfo.length; i++) {
@@ -149,7 +158,7 @@ contract HotokenReservation is StandardToken, Ownable {
         }
     }
 
-    function removeManyFromWhitelist(address[] _addresses) public onlyOwner {
+    function removeManyFromWhitelist(address[] _addresses) public onlyOwner onlySaleIsNotFinished {
         for (uint i = 0; i < _addresses.length; i++) {
             whitelist[_addresses[i]] = 0;
 
@@ -172,7 +181,7 @@ contract HotokenReservation is StandardToken, Ownable {
     * @param _amount amount of the currency
     * @param _tokens amount of tokens [need to be in wei amount (with multiply by 10 pow 18)]
     */
-    function addToLedger(address _address, string _currency, uint _amount, uint _tokens) public onlyOwner {
+    function addToLedger(address _address, string _currency, uint _amount, uint _tokens) public onlyOwner onlySaleIsNotFinished {
         // need to check amount in case that currency is not ETH
         // check tokens more than supply or not
         uint256 tokens = _tokens.mul(10 ** uint(decimals));
@@ -200,7 +209,7 @@ contract HotokenReservation is StandardToken, Ownable {
         uint _usdRate = usdRateMap[_currency];
         uint _discount = getDiscountRate();
 
-        ledgerMap[_address].push(Ledger(_currentTime, _currency, _amount, _usdRate, _discount, _tokens));
+        ledgerMap[_address].push(Ledger(_currentTime, _currency, _amount.div(10 ** uint(decimals)), _usdRate, _discount, _tokens));
     }
 
     function existsInLedger(address _address) public view returns (bool) {
@@ -241,7 +250,7 @@ contract HotokenReservation is StandardToken, Ownable {
     * set pause state for preventing sale from buyers
     * @param _pause boolean
     */
-    function setPause(bool _pause) public onlyOwner {
+    function setPause(bool _pause) public onlyOwner onlySaleIsNotFinished {
         pause = _pause;
     }
 
@@ -352,6 +361,46 @@ contract HotokenReservation is StandardToken, Ownable {
 
     function transferFrom(address _from, address _to, uint256 _value) public onlyOwner validDestination(_to) returns (bool) {
         return super.transferFrom(_from, _to, _value);
+    }
+
+    /**
+    * Set the minimum sold in usd currency.
+    * @param _minimumSold minimumSold
+    */
+    function setMinimumSold(uint _minimumSold) public onlyOwner {
+        minimumSold = _minimumSold;
+    }
+
+    function getMinimumSold() external view returns (uint) {
+        return minimumSold;
+    }
+
+    /**
+    * Set the sale finish flag
+    * @param _saleFinished sale finished
+    */
+    function setSaleFinished(bool _saleFinished) public onlyOwner {
+        saleFinished = _saleFinished;
+    }
+
+    function getSaleFinished() external view returns (bool) {
+        return saleFinished;
+    }
+
+    /**
+    * @dev Burns a specific amount of tokens.
+    */
+    function burn() public onlyOwner {
+        uint valueToBurn = balances[burner];
+        require(saleFinished);
+        require(valueToBurn <= balances[msg.sender]);
+        // no need to require value <= totalSupply, since that would imply the
+        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+
+        address burner = msg.sender;
+        balances[burner] = balances[burner].sub(valueToBurn);
+        totalSupply = totalSupply.sub(valueToBurn);
+        Burn(burner, valueToBurn);
     }
 
     // Kill the contract
