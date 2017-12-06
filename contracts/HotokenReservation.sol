@@ -6,7 +6,7 @@ import './math/SafeMath.sol';
 import './utils/strings.sol';
 
 contract HotokenReservation is StandardToken, Ownable {
-    
+
     using SafeMath for uint256;
     using strings for *;
 
@@ -77,7 +77,7 @@ contract HotokenReservation is StandardToken, Ownable {
     modifier onlySaleIsNotFinished() {
         require(!saleFinished);
         _;
-    } 
+    }
 
     function HotokenReservation() public {
         totalSupply = INITIAL_SUPPLY;
@@ -116,7 +116,7 @@ contract HotokenReservation is StandardToken, Ownable {
         require(beneficiary != address(0));
         require(owner != beneficiary);
         require(whitelist[beneficiary] == 1);
-        
+
         if ((minimumPurchase <= usdAmount) || exists) {
             require(exceedSupply <= INITIAL_SUPPLY);
             // update state
@@ -207,7 +207,7 @@ contract HotokenReservation is StandardToken, Ownable {
         uint _discount = getDiscountRate();
 
         tokenSold = tokenSold.add(tokens);
-        balances[msg.sender] = balances[msg.sender].sub(tokens); 
+        balances[msg.sender] = balances[msg.sender].sub(tokens);
 
         ledgerMap[_address].push(Ledger(_currentTime, _currency, _amount, _usdRate, _discount, tokens));
     }
@@ -240,9 +240,9 @@ contract HotokenReservation is StandardToken, Ownable {
         headers[4] = "discount_rate".toSlice();
         headers[5] = "token_quantity".toSlice();
         ledgerCSV[0] = ",".toSlice().join(headers).toSlice();
-        
+
         for (uint i = 0; i < ledgerMap[_address].length; i++) {
-            var parts = new strings.slice[](6);    
+            var parts = new strings.slice[](6);
             Ledger ledger = ledgerMap[_address][i];
             parts[0] = strings.uintToBytes(ledger.datetime).toSliceB32();
             parts[1] = ledger.currency.toSlice();
@@ -308,6 +308,21 @@ contract HotokenReservation is StandardToken, Ownable {
         return usdRateMap[_currency];
     }
 
+    mapping(string=>uint) conversionRateMap;
+
+    /**
+    * To set conversion rate from supported currencies to $e-18
+    * @param _currency eg. ["ETH", "BTC", "Cent"] (string)
+    * @param _rate conversion rate in cent; how many cent for 1 currency unit (int)
+    */
+    function setConversionRate(string _currency, uint _rate) public onlyOwner {
+        conversionRateMap[_currency] = _rate;
+    }
+
+    function getConversionRate(string _currency) public view returns (uint) {
+        return conversionRateMap[_currency];
+    }
+
     /**
     * To set minimum purchase
     * @param _minimum in usd (int)
@@ -353,9 +368,9 @@ contract HotokenReservation is StandardToken, Ownable {
         // headers[0] = "eth_address".toSlice();
         // headers[1] = "htkn_address".toSlice();
         // ledgerCSV[0] = ",".toSlice().join(headers).toSlice();
-        
+
         // for (uint i = 0; i < ledgerMap[_address].length; i++) {
-        //     var parts = new strings.slice[](6);    
+        //     var parts = new strings.slice[](6);
         //     Ledger ledger = ledgerMap[_address][i];
         //     parts[0] = strings.uintToBytes(ledger.datetime).toSliceB32();
         //     parts[1] = ledger.currency.toSlice();
