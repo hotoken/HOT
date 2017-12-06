@@ -39,6 +39,7 @@ contract HotokenReservation is StandardToken, Ownable {
     // Mapping
     mapping(address=>uint) public whitelist;
     mapping(address=>Ledger[]) public ledgerMap;
+    mapping(address=>uint) contributorFund;
     mapping(address=>string) claimTokenMap;
     mapping(string=>uint) usdRateMap;
 
@@ -150,17 +151,25 @@ contract HotokenReservation is StandardToken, Ownable {
     * @param _address address of buyer
     * @param _currency currency that buyer spent
     * @param _amount amount of the currency
-    * @param _tokens amount of tokens
+    * @param _tokens amount of tokens [need to be in wei amount (with multiply by 10 pow 18)]
     */
     function addToLedger(address _address, string _currency, uint _amount, uint _tokens) public onlyOwner {
         // need to check amount in case that currency is not ETH
+        // check tokens more than supply or not
+        uint256 tokens = _tokens.mul(10 ** uint(decimals));
+        uint256 exceedSupply = tokenSold.add(tokens);
+
         require(_address != owner);
         require(usdRateMap[_currency] > 0);
+        require(exceedSupply <= totalSupply);
+
         uint _currentTime = now;
         uint _usdRate = usdRateMap[_currency];
         uint _discount = getDiscountRate();
 
-        ledgerMap[_address].push(Ledger(_currentTime, _currency, _amount, _usdRate, _discount, _tokens));
+        tokenSold = tokenSold.add(tokens);
+
+        ledgerMap[_address].push(Ledger(_currentTime, _currency, _amount, _usdRate, _discount, tokens));
     }
 
     function addToLedgerAfterSell(address _address, string _currency, uint _amount, uint _tokens) internal {

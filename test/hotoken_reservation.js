@@ -549,10 +549,49 @@ contract('HotokenReservation add information to ledger', function(accounts) {
     const instance = await HotokenReservation.deployed()
     const user1 = accounts[1]
     const amount = 100000
+    const tokens = 2000
 
-    await instance.addToLedger(user1, "ETH", amount, 20000)
+    const tokenSoldBefore = (await instance.getTokenSold()).toNumber()
+
+    await instance.addToLedger(user1, "ETH", amount, tokens)
+    const tokenSoldAfter = (await instance.getTokenSold()).toNumber()
+
     const exists = await instance.existsInLedger(user1)
+    expect(tokenSoldAfter).to.be.equal(2000000000000000000000)
     expect(exists).to.be.true
+  })
+
+  it('should increase tokenSold when add address information in the ledger', async function() {
+    const instance = await HotokenReservation.deployed()
+    const user1 = accounts[1]
+    const amount = 100000
+    const tokens = 4000
+
+    const tokenSoldBefore = (await instance.getTokenSold()).toNumber()
+    expect(tokenSoldBefore).to.be.equal(2000000000000000000000)
+
+    await instance.addToLedger(user1, "BTC", amount, tokens)
+    const tokenSoldAfter = (await instance.getTokenSold()).toNumber()
+
+    const exists = await instance.existsInLedger(user1)
+    expect(tokenSoldAfter).to.be.equal(6000000000000000000000)
+    expect(exists).to.be.true
+  })
+
+  it('should not be able to add address information in the ledger if tokens is more then supply', async function() {
+    const instance = await HotokenReservation.deployed()
+    const user1 = accounts[1]
+    const amount = 100000
+    const tokens = 4000000000
+
+    const tokenSoldBefore = (await instance.getTokenSold()).toNumber()
+    expect(tokenSoldBefore).to.be.equal(6000000000000000000000)
+
+    try {
+      await instance.addToLedger(user1, "BTC", amount, tokens)
+    } catch (e) {
+      expect(e.toString()).to.be.include('revert')
+    }
   })
 
   it('should not be able to add address information in the ledger if not call by owner', async function() {
