@@ -152,7 +152,7 @@ contract('HotokenReservation buy token', function(accounts) {
 
   it('should be able to retrieve ether for contributor that is in the whitelist', async function() {
     const instance = await HotokenReservation.deployed()
-    const HTKN_PER_ETH = (await instance.HTKN_PER_ETH.call()).toNumber()
+    const HTKN_PER_USD = (await instance.HTKN_PER_USD.call()).toNumber()
     const discountRate = (await instance.getDiscountRate()).toNumber()
     const usdRate = (await instance.getUSDRate("ETH")).toNumber()
     const owner = accounts[0]
@@ -182,11 +182,13 @@ contract('HotokenReservation buy token', function(accounts) {
     expect(user1BalanceAfter).to.be.equal(264000000000000000000000)
     expect(ownerEtherAfter).to.be.above(ownerEtherBefore)
     expect(tokenSoldAfter).to.be.equal(Number(tokenSoldBefore + 264000000000000000000000))
+
+    // need to check balance of owner
   })
 
   it('check the tokens that user received, it comes from correct calculation', async function() {
     const instance = await HotokenReservation.deployed()
-    const HTKN_PER_ETH = (await instance.HTKN_PER_ETH.call()).toNumber()
+    const HTKN_PER_USD = (await instance.HTKN_PER_USD.call()).toNumber()
     const discountRate = (await instance.getDiscountRate()).toNumber()
     const usdRate = (await instance.getUSDRate("ETH")).toNumber()
     const owner = accounts[0]
@@ -219,11 +221,13 @@ contract('HotokenReservation buy token', function(accounts) {
     // expect(user4BalanceAfter).to.be.equal(19800000000000000000000)
     // expect(ownerEtherAfter).to.be.above(ownerEtherBefore)
     // expect(tokenSoldAfter).to.be.equal(tokenSoldBefore + 19800000000000000000000)
+
+    // need to check balance of owner
   })
 
   it('should be able to retrieve ether for contributor that already exists in ledger even if amount is less than minimum purchase', async function() {
     const instance = await HotokenReservation.deployed()
-    const HTKN_PER_ETH = (await instance.HTKN_PER_ETH.call()).toNumber()
+    const HTKN_PER_USD = (await instance.HTKN_PER_USD.call()).toNumber()
     const discountRate = (await instance.getDiscountRate()).toNumber()
     const usdRate = (await instance.getUSDRate("ETH")).toNumber()
     const owner = accounts[0]
@@ -251,11 +255,13 @@ contract('HotokenReservation buy token', function(accounts) {
     // expect(user1BalanceAfter).to.be.closeTo(user1BalanceBefore + 5800000000000000000000, 0.000001)
     expect(ownerEtherAfter).to.be.above(ownerEtherBefore)
     // expect(tokenSoldAfter).to.be.closeTo(tokenSoldBefore + 5800000000000000000000, 0.000001)
+
+    // need to check balance of owner
   })
 
   it('should be able to sell token more than supply', async function() {
     const instance = await HotokenReservation.deployed()
-    const HTKN_PER_ETH = (await instance.HTKN_PER_ETH.call()).toNumber()
+    const HTKN_PER_USD = (await instance.HTKN_PER_USD.call()).toNumber()
     const discountRate = (await instance.getDiscountRate()).toNumber()
     const usdRate = (await instance.getUSDRate("ETH")).toNumber()
     const owner = accounts[0]
@@ -281,6 +287,8 @@ contract('HotokenReservation buy token', function(accounts) {
 
     expect(tokenSoldAfter).to.be.equal(tokenSoldBefore)
     expect(user1BalanceAfter).to.be.equal(user1BalanceBefore)
+
+    // need to check balance of owner
   })
 
   it('should not be able to retrieve ether from address that it is not in the whitelist', async function() {
@@ -301,6 +309,8 @@ contract('HotokenReservation buy token', function(accounts) {
 
     const tokenSoldAfter = (await instance.getTokenSold()).toNumber()
     expect(tokenSoldAfter).to.be.equal(tokenSoldBefore)
+
+    // need to check balance of owner
   })
   
   it('should not be able to retrieve ether if contract is paused', async function() {
@@ -323,6 +333,8 @@ contract('HotokenReservation buy token', function(accounts) {
 
     const tokenSoldAfter = (await instance.getTokenSold()).toNumber()
     expect(tokenSoldAfter).to.be.equal(tokenSoldBefore)
+
+    // need to check balance of owner
   })
 
   it('should not be able to retrieve ether from owner contract address', async function() {
@@ -344,11 +356,13 @@ contract('HotokenReservation buy token', function(accounts) {
     }
     const tokenSoldAfter = (await instance.getTokenSold()).toNumber()
     expect(tokenSoldAfter).to.be.equal(tokenSoldBefore)
+
+    // need to check balance of owner
   })
 
   it('should be able to log event if send ether success', async function() {
     const instance = await HotokenReservation.deployed()
-    const HTKN_PER_ETH = (await instance.HTKN_PER_ETH.call()).toNumber()
+    const HTKN_PER_USD = (await instance.HTKN_PER_USD.call()).toNumber()
     const discountRate = (await instance.getDiscountRate()).toNumber()
 
     /// set USD Rate
@@ -376,7 +390,9 @@ contract('HotokenReservation buy token', function(accounts) {
     expect(tx.logs[0].args.purchaser).to.be.equal(user2)
     expect(tx.logs[0].args.beneficiary).to.be.equal(user2)
     expect(tx.logs[0].args.value.toNumber()).to.be.equal(Number(amountWei))
-    expect(tx.logs[0].args.amount.toNumber()).to.be.equal(HTKN_PER_ETH * (100 + discountRate) / 100 * usdRate * amountWei)
+    expect(tx.logs[0].args.amount.toNumber()).to.be.equal(HTKN_PER_USD * (100 + discountRate) / 100 * usdRate * amountWei)
+
+    // need to check balance of owner
   })
 })
 
@@ -597,6 +613,8 @@ contract('HotokenReservation add information to ledger', function(accounts) {
     const exists = await instance.existsInLedger(user1)
     expect(tokenSoldAfter).to.be.equal(2000000000000000000000)
     expect(exists).to.be.true
+
+    // need to check balance of owner
   })
 
   it('should increase tokenSold when add address information in the ledger', async function() {
@@ -614,6 +632,8 @@ contract('HotokenReservation add information to ledger', function(accounts) {
     const exists = await instance.existsInLedger(user1)
     expect(tokenSoldAfter).to.be.equal(6000000000000000000000)
     expect(exists).to.be.true
+
+    // need to check balance of owner
   })
 
   it('should not be able to add address information in the ledger if not in the whitelist', async function() {
@@ -628,6 +648,8 @@ contract('HotokenReservation add information to ledger', function(accounts) {
     }
     const exists = await instance.existsInLedger(user2)
     expect(exists).to.be.false
+
+    // need to check balance of owner
   })
 
   it('should not be able to add address information in the ledger if tokens is more then supply', async function() {
@@ -644,6 +666,8 @@ contract('HotokenReservation add information to ledger', function(accounts) {
     } catch (e) {
       expect(e.toString()).to.be.include('revert')
     }
+
+    // need to check balance of owner
   })
 
   it('should not be able to add address information in the ledger if not call by owner', async function() {
@@ -657,6 +681,8 @@ contract('HotokenReservation add information to ledger', function(accounts) {
     } catch (e) {
       expect(e.toString()).to.be.include('revert')
     }
+
+    // need to check balance of owner
   })
 
   it('should not be able to add address information in the ledger that currency is not in usd rate map', async function() {
@@ -669,6 +695,8 @@ contract('HotokenReservation add information to ledger', function(accounts) {
     } catch (e) {
       expect(e.toString()).to.be.include('revert')
     }
+
+    // need to check balance of owner
   })
 
   it('should not be able to add owner address information in the ledger', async function() {
@@ -683,6 +711,8 @@ contract('HotokenReservation add information to ledger', function(accounts) {
     }
     const exists = await instance.existsInLedger(owner)
     expect(exists).to.be.false
+
+    // need to check balance of owner
   })
 
   it('should be able to get ledger information', async function() {
@@ -702,6 +732,8 @@ contract('HotokenReservation add information to ledger', function(accounts) {
     expect(ledgerInformation).to.be.include('datetime,currency,currency_quantity,usd_rate,discount_rate,token_quantity')
     expect(ledgerInformation).to.be.include(',BTC,100000,11000,65,4000000000000000000000')
     expect(ledgerInformation).to.be.include(',ETH,1,400,65,6600000000000000000000')
+
+    // need to check balance of owner
   })
 
   it('should not be able to get ledger information if address is not exists in ledger', async function() {
@@ -982,7 +1014,9 @@ contract('HotokenReservation, burn tokens', function(accounts) {
     await instance.burn()
 
     // expect((await instance.totalSupply.call()).toNumber()).to.be.equal(3000000000000000000000000000 - 6600000000000000000000)
-    // expect((await instance.balanceOf.call(accounts[0])).toNumber()).to.be.equal(3000000000000000000000000000 - 6600000000000000000000)
+    expect((await instance.balanceOf.call(accounts[0])).toNumber()).to.be.equal(0)
+
+    // need to check balance of owner
   })
 })
 

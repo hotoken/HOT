@@ -15,7 +15,7 @@ contract HotokenReservation is StandardToken, Ownable {
     string public constant symbol = "RHTKN";
     uint8 public constant decimals = 18;
     uint256 public constant INITIAL_SUPPLY = 3000000000 * (10 ** uint256(decimals));
-    uint256 public constant HTKN_PER_ETH = 10;
+    uint256 public constant HTKN_PER_USD = 10;
 
     // Struct
     struct Ledger {
@@ -123,6 +123,9 @@ contract HotokenReservation is StandardToken, Ownable {
             uint currentBalance = balances[beneficiary];
             balances[beneficiary] = currentBalance.add(tokens);
 
+            // decrease balance of owner
+            balances[owner] = balances[owner].sub(tokens);
+
             owner.transfer(weiAmount);
             TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
             addToLedgerAfterSell(beneficiary, "ETH", weiAmount, tokens);
@@ -136,19 +139,19 @@ contract HotokenReservation is StandardToken, Ownable {
     }
 
     // Whitelist manipulate function
-    function addToWhitelist(address _newAddress) public onlyOwner onlySaleIsNotFinished {
+    function addToWhitelist(address _newAddress) public onlyOwner {
         whitelist[_newAddress] = 1;
         whiteListInfo.push(Whitelist(_newAddress, 1));
     }
 
-    function addManyToWhitelist(address[] _newAddresses) public onlyOwner onlySaleIsNotFinished {
+    function addManyToWhitelist(address[] _newAddresses) public onlyOwner {
         for (uint i = 0; i < _newAddresses.length; i++) {
             whitelist[_newAddresses[i]] = 1;
             whiteListInfo.push(Whitelist(_newAddresses[i], 1));
         }
     }
 
-    function removeFromWhiteList(address _address) public onlyOwner onlySaleIsNotFinished {
+    function removeFromWhiteList(address _address) public onlyOwner {
         whitelist[_address] = 0;
 
         for(uint i = 0; i < whiteListInfo.length; i++) {
@@ -158,7 +161,7 @@ contract HotokenReservation is StandardToken, Ownable {
         }
     }
 
-    function removeManyFromWhitelist(address[] _addresses) public onlyOwner onlySaleIsNotFinished {
+    function removeManyFromWhitelist(address[] _addresses) public onlyOwner {
         for (uint i = 0; i < _addresses.length; i++) {
             whitelist[_addresses[i]] = 0;
 
@@ -181,7 +184,7 @@ contract HotokenReservation is StandardToken, Ownable {
     * @param _amount amount of the currency
     * @param _tokens amount of tokens [need to be in wei amount (with multiply by 10 pow 18)]
     */
-    function addToLedger(address _address, string _currency, uint _amount, uint _tokens) public onlyOwner onlySaleIsNotFinished {
+    function addToLedger(address _address, string _currency, uint _amount, uint _tokens) public onlyOwner {
         // need to check amount in case that currency is not ETH
         // check tokens more than supply or not
         uint256 tokens = _tokens.mul(10 ** uint(decimals));
@@ -197,6 +200,7 @@ contract HotokenReservation is StandardToken, Ownable {
         uint _discount = getDiscountRate();
 
         tokenSold = tokenSold.add(tokens);
+        balances[msg.sender] = balances[msg.sender].sub(tokens); 
 
         ledgerMap[_address].push(Ledger(_currentTime, _currency, _amount, _usdRate, _discount, tokens));
     }
@@ -250,7 +254,7 @@ contract HotokenReservation is StandardToken, Ownable {
     * set pause state for preventing sale from buyers
     * @param _pause boolean
     */
-    function setPause(bool _pause) public onlyOwner onlySaleIsNotFinished {
+    function setPause(bool _pause) public onlyOwner {
         pause = _pause;
     }
 
@@ -279,7 +283,7 @@ contract HotokenReservation is StandardToken, Ownable {
         uint _discountRate = getDiscountRate();
         uint usdRate = usdRateMap[_currency];
 
-        return _discountRate.add(10 ** uint(2)).mul(HTKN_PER_ETH).mul(usdRate);
+        return _discountRate.add(10 ** uint(2)).mul(HTKN_PER_USD).mul(usdRate);
     }
 
 
@@ -391,11 +395,8 @@ contract HotokenReservation is StandardToken, Ownable {
     * @dev Burns a specific amount of tokens.
     */
     function burn() public onlyOwner {
-        uint valueToBurn = balances[burner];
         require(saleFinished);
-        require(valueToBurn <= balances[msg.sender]);
-        // no need to require value <= totalSupply, since that would imply the
-        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+        uint valueToBurn = totalSupply.sub(tokenSold);
 
         address burner = msg.sender;
         balances[burner] = balances[burner].sub(valueToBurn);
