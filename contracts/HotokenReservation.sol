@@ -38,6 +38,7 @@ contract HotokenReservation is StandardToken, Ownable {
     uint256 public minimumPurchase;
     bool    public saleFinished = false;
     uint256 public minimumSold;
+    uint256 public totalUSDAmount;
     Whitelist[] public whiteListInfo;
 
     // Enum
@@ -77,7 +78,7 @@ contract HotokenReservation is StandardToken, Ownable {
         require(!saleFinished);
         _;
     } 
-    
+
     function HotokenReservation() public {
         totalSupply = INITIAL_SUPPLY;
         balances[msg.sender] = INITIAL_SUPPLY;
@@ -91,6 +92,8 @@ contract HotokenReservation is StandardToken, Ownable {
 
         minimumPurchase = 3 * (10 ** uint(2));
         minimumSold = 2 * (10 ** uint(6));
+
+        totalUSDAmount = 0;
     }
 
     // fallback function can be used to buy tokens
@@ -102,7 +105,7 @@ contract HotokenReservation is StandardToken, Ownable {
         uint256 weiAmount = msg.value;
         uint256 usdRate = usdRateMap["ETH"];
 
-        // calculate token amount to be created
+        // calculate token amount to be created problem
         uint256 usdAmount = weiAmount.mul(usdRate).div(10 ** uint256(decimals));
         uint256 tokens = weiAmount.mul(calculateRate("ETH")).div(10 ** uint(2));
         bool exists = ledgerMap[msg.sender].length > 0;
@@ -125,6 +128,8 @@ contract HotokenReservation is StandardToken, Ownable {
 
             // decrease balance of owner
             balances[owner] = balances[owner].sub(tokens);
+
+            totalUSDAmount = totalUSDAmount.add(usdAmount);
 
             owner.transfer(weiAmount);
             TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
@@ -194,6 +199,8 @@ contract HotokenReservation is StandardToken, Ownable {
         require(whitelist[_address] == 1);
         require(usdRateMap[_currency] > 0);
         require(exceedSupply <= totalSupply);
+
+        uint256 usdRate = usdRateMap[_currency];
 
         uint _currentTime = now;
         uint _usdRate = usdRateMap[_currency];
@@ -317,7 +324,9 @@ contract HotokenReservation is StandardToken, Ownable {
     * Claim Tokens
     * @param _address address for sending token to
     */
-    function claimTokens(string _address) public {
+    function claimTokens(string _address) public onlyWhenPauseDisabled {
+        require(saleFinished);
+        require(tokenSold >= minimumSold);
         require(msg.sender != owner);
         require(whitelist[msg.sender] == 1);
         require(ledgerMap[msg.sender].length > 0);
