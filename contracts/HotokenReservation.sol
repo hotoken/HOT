@@ -323,6 +323,11 @@ contract HotokenReservation is StandardToken, Ownable {
         return conversionRateMap[_currency];
     }
 
+    function weiToUsd(uint _wei) public view returns (uint) {
+      uint rateInCents = getConversionRate("ETH");
+      return _wei.mul(rateInCents).mul(10 ** uint(decimals-2)).div(10 ** uint(decimals));
+    }
+
     /**
     * To set minimum purchase
     * @param _minimum in usd (int)
