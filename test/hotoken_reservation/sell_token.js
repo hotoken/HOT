@@ -112,7 +112,7 @@ contract('HotokenReservation buy token', function(accounts) {
     // need to check balance of owner
   })
 
-  it('should be able to sell token more than supply', async function() {
+  it('should not be able to sell token more than supply', async function() {
     const owner = accounts[0]
     const user1 = accounts[1]
 
