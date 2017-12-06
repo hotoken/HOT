@@ -21,6 +21,10 @@ contract('HotokenReservation', function(accounts) {
     expect(result).to.be.not.empty
     expect(Object.keys(result)).to.have.lengthOf(3)
     expect(result.receipt.status).to.be.equal(1)
+
+    const whiteListInfo = await instance.whiteListInfo.call(0)
+    expect(whiteListInfo[0]).to.be.equal(newAccount)
+    expect(whiteListInfo[1].toNumber()).to.be.equal(1)
   })
 
   it('should be able check address in the whitelist', async function() {
@@ -48,6 +52,22 @@ contract('HotokenReservation', function(accounts) {
     expect((await instance.whitelist.call(newAccounts[0])).toNumber()).to.be.equal(1)
     expect((await instance.whitelist.call(newAccounts[1])).toNumber()).to.be.equal(1)
     expect((await instance.whitelist.call(newAccounts[2])).toNumber()).to.be.equal(1)
+
+    let whiteListInfo = await instance.whiteListInfo.call(0)
+    expect(whiteListInfo[0]).to.be.equal(accounts[1])
+    expect(whiteListInfo[1].toNumber()).to.be.equal(1)
+
+    whiteListInfo = await instance.whiteListInfo.call(1)
+    expect(whiteListInfo[0]).to.be.equal(accounts[2])
+    expect(whiteListInfo[1].toNumber()).to.be.equal(1)
+
+    whiteListInfo = await instance.whiteListInfo.call(2)
+    expect(whiteListInfo[0]).to.be.equal(accounts[3])
+    expect(whiteListInfo[1].toNumber()).to.be.equal(1)
+
+    whiteListInfo = await instance.whiteListInfo.call(3)
+    expect(whiteListInfo[0]).to.be.equal(accounts[4])
+    expect(whiteListInfo[1].toNumber()).to.be.equal(1)
   })
 
   it('should be able to remove address from whitelist', async function() {
@@ -56,6 +76,10 @@ contract('HotokenReservation', function(accounts) {
     await instance.removeFromWhiteList(account)
     const exists = await instance.whitelist.call(account)
     expect(exists.toNumber()).to.equal(0)
+
+    const whiteListInfo = await instance.whiteListInfo.call(0)
+    expect(whiteListInfo[0]).to.be.equal(account)
+    expect(whiteListInfo[1].toNumber()).to.be.equal(0)
   })
 
   it('should be able to remove many addresses from whitelist', async function() {
@@ -65,6 +89,22 @@ contract('HotokenReservation', function(accounts) {
     expect((await instance.whitelist.call(listOfAccounts[0])).toNumber()).to.be.equal(0)
     expect((await instance.whitelist.call(listOfAccounts[1])).toNumber()).to.be.equal(0)
     expect((await instance.whitelist.call(listOfAccounts[2])).toNumber()).to.be.equal(0)
+
+    let whiteListInfo = await instance.whiteListInfo.call(0)
+    expect(whiteListInfo[0]).to.be.equal(accounts[1])
+    expect(whiteListInfo[1].toNumber()).to.be.equal(0)
+
+    whiteListInfo = await instance.whiteListInfo.call(1)
+    expect(whiteListInfo[0]).to.be.equal(accounts[2])
+    expect(whiteListInfo[1].toNumber()).to.be.equal(0)
+
+    whiteListInfo = await instance.whiteListInfo.call(2)
+    expect(whiteListInfo[0]).to.be.equal(accounts[3])
+    expect(whiteListInfo[1].toNumber()).to.be.equal(0)
+
+    whiteListInfo = await instance.whiteListInfo.call(3)
+    expect(whiteListInfo[0]).to.be.equal(accounts[4])
+    expect(whiteListInfo[1].toNumber()).to.be.equal(0)
   })
 
   it('should not be able to add address to whitelist if caller is not the owner', async function() {
@@ -551,6 +591,7 @@ contract('HotokenReservation add information to ledger', function(accounts) {
     const amount = 100000
     const tokens = 2000
 
+    await instance.addToWhitelist(user1)
     const tokenSoldBefore = (await instance.getTokenSold()).toNumber()
 
     await instance.addToLedger(user1, "ETH", amount, tokens)
@@ -578,6 +619,20 @@ contract('HotokenReservation add information to ledger', function(accounts) {
     expect(exists).to.be.true
   })
 
+  it('should not be able to add address information in the ledger if not in the whitelist', async function() {
+    const instance = await HotokenReservation.deployed()
+    const user2 = accounts[2]
+    const amount = 100000
+
+    try {
+      await instance.addToLedger(user2, "ETH", amount, 20000)
+    } catch (e) {
+      expect(e.toString()).to.be.include('revert')
+    }
+    const exists = await instance.existsInLedger(user2)
+    expect(exists).to.be.false
+  })
+
   it('should not be able to add address information in the ledger if tokens is more then supply', async function() {
     const instance = await HotokenReservation.deployed()
     const user1 = accounts[1]
@@ -601,26 +656,22 @@ contract('HotokenReservation add information to ledger', function(accounts) {
     const amount = 100000
 
     try {
-      await instance.addToLedger(user2, "ETH", amount, 20000, {from: user1})
+      await instance.addToLedger(user1, "ETH", amount, 20000, {from: user2})
     } catch (e) {
       expect(e.toString()).to.be.include('revert')
     }
-    const exists = await instance.existsInLedger(user2)
-    expect(exists).to.be.false
   })
 
   it('should not be able to add address information in the ledger that currency is not in usd rate map', async function() {
     const instance = await HotokenReservation.deployed()
-    const user2 = accounts[2]
+    const user1 = accounts[1]
     const amount = 100000
 
     try {
-      await instance.addToLedger(user2, "LTC", amount, 20000)
+      await instance.addToLedger(user1, "LTC", amount, 20000)
     } catch (e) {
       expect(e.toString()).to.be.include('revert')
     }
-    const exists = await instance.existsInLedger(user2)
-    expect(exists).to.be.false
   })
 
   it('should not be able to add owner address information in the ledger', async function() {

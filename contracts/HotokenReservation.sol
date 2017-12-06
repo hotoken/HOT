@@ -17,11 +17,6 @@ contract HotokenReservation is StandardToken, Ownable {
     uint256 public constant INITIAL_SUPPLY = 3000000000 * (10 ** uint256(decimals));
     uint256 public constant HTKN_PER_ETH = 10;
 
-    // Properties
-    uint256 public tokenSold;
-    bool    public pause = true;
-    uint256 public minimumPurchase;
-
     // Struct
     struct Ledger {
         uint datetime;
@@ -32,6 +27,17 @@ contract HotokenReservation is StandardToken, Ownable {
         uint tokenQuantity;
     }
 
+    struct Whitelist {
+        address buyer;
+        uint exists;
+    }
+
+    // Properties
+    uint256 public tokenSold;
+    bool    public pause = true;
+    uint256 public minimumPurchase;
+    Whitelist[] public whiteListInfo;
+
     // Enum
     enum DiscountRate {ZERO, TWENTY_FIVE, FOURTY_FIVE, SIXTY_FIVE}
     DiscountRate discountRate;
@@ -39,7 +45,6 @@ contract HotokenReservation is StandardToken, Ownable {
     // Mapping
     mapping(address=>uint) public whitelist;
     mapping(address=>Ledger[]) public ledgerMap;
-    mapping(address=>uint) contributorFund;
     mapping(address=>string) claimTokenMap;
     mapping(string=>uint) usdRateMap;
 
@@ -124,21 +129,35 @@ contract HotokenReservation is StandardToken, Ownable {
     // Whitelist manipulate function
     function addToWhitelist(address _newAddress) public onlyOwner {
         whitelist[_newAddress] = 1;
+        whiteListInfo.push(Whitelist(_newAddress, 1));
     }
 
     function addManyToWhitelist(address[] _newAddresses) public onlyOwner {
         for (uint i = 0; i < _newAddresses.length; i++) {
             whitelist[_newAddresses[i]] = 1;
+            whiteListInfo.push(Whitelist(_newAddresses[i], 1));
         }
     }
 
     function removeFromWhiteList(address _address) public onlyOwner {
         whitelist[_address] = 0;
+
+        for(uint i = 0; i < whiteListInfo.length; i++) {
+            if (whiteListInfo[i].buyer == _address) {
+                 whiteListInfo[i].exists = 0;
+            }
+        }
     }
 
     function removeManyFromWhitelist(address[] _addresses) public onlyOwner {
         for (uint i = 0; i < _addresses.length; i++) {
             whitelist[_addresses[i]] = 0;
+
+            for(uint j = 0; j < whiteListInfo.length; j++) {
+                if (whiteListInfo[j].buyer == _addresses[i]) {
+                    whiteListInfo[j].exists = 0;
+                }
+            }
         }
     }
 
@@ -160,6 +179,7 @@ contract HotokenReservation is StandardToken, Ownable {
         uint256 exceedSupply = tokenSold.add(tokens);
 
         require(_address != owner);
+        require(whitelist[_address] == 1);
         require(usdRateMap[_currency] > 0);
         require(exceedSupply <= totalSupply);
 
@@ -298,6 +318,33 @@ contract HotokenReservation is StandardToken, Ownable {
     function alreadyClaimTokens() public view returns (bool) {
         return bytes(claimTokenMap[msg.sender]).length > 0;
     }
+
+    /**
+    * Get the list of all claimTokens
+    */
+    // function getListOfClaimTokens() public view onlyOwner returns (string) {
+    //     var ledgerCSV = new strings.slice[]();
+
+        // add header for csv
+        // var headers = new strings.slice[](2);
+        // headers[0] = "eth_address".toSlice();
+        // headers[1] = "htkn_address".toSlice();
+        // ledgerCSV[0] = ",".toSlice().join(headers).toSlice();
+        
+        // for (uint i = 0; i < ledgerMap[_address].length; i++) {
+        //     var parts = new strings.slice[](6);    
+        //     Ledger ledger = ledgerMap[_address][i];
+        //     parts[0] = strings.uintToBytes(ledger.datetime).toSliceB32();
+        //     parts[1] = ledger.currency.toSlice();
+        //     parts[2] = strings.uintToBytes(ledger.quantity).toSliceB32();
+        //     parts[3] = strings.uintToBytes(ledger.usdRate).toSliceB32();
+        //     parts[4] = strings.uintToBytes(ledger.discount).toSliceB32();
+        //     parts[5] = strings.uintToBytes(ledger.tokenQuantity).toSliceB32();
+        //     ledgerCSV[i + 1] = ",".toSlice().join(parts).toSlice();
+        // }
+
+    //     return "\n".toSlice().join(ledgerCSV);
+    // }
 
     function transfer(address _to, uint256 _value) public onlyOwner validDestination(_to) returns (bool) {
         return super.transfer(_to, _value);
