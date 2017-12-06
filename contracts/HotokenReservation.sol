@@ -38,7 +38,8 @@ contract HotokenReservation is StandardToken, Ownable {
     uint256 public minimumPurchase;
     bool    public saleFinished = false;
     uint256 public minimumSold;
-    uint256 public totalUSDAmount;
+    uint256 public soldAmount;
+    uint256 public refundAmount;
     Whitelist[] public whiteListInfo;
 
     // Enum
@@ -48,8 +49,9 @@ contract HotokenReservation is StandardToken, Ownable {
     // Mapping
     mapping(address=>uint) public whitelist;
     mapping(address=>Ledger[]) public ledgerMap;
-    mapping(address=>string) claimTokenMap;
+    mapping(address=>string) public claimTokenMap;
     mapping(string=>uint) usdRateMap;
+    mapping(address=>uint256) public ethAmount;
 
     // Events
     /**
@@ -61,6 +63,8 @@ contract HotokenReservation is StandardToken, Ownable {
     */
     event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
     event Burn(address indexed burner, uint256 value);
+    event RefundTransfer(address _backer, uint _amount);
+    event WithdrawOnlyOwner(address _owner, uint _amount);
 
     // Modifiers
     modifier validDestination(address _to) {
@@ -93,7 +97,8 @@ contract HotokenReservation is StandardToken, Ownable {
         minimumPurchase = 3 * (10 ** uint(2));
         minimumSold = 2 * (10 ** uint(6));
 
-        totalUSDAmount = 0;
+        soldAmount = 0;
+        refundAmount = 0;
     }
 
     // fallback function can be used to buy tokens
@@ -129,9 +134,12 @@ contract HotokenReservation is StandardToken, Ownable {
             // decrease balance of owner
             balances[owner] = balances[owner].sub(tokens);
 
-            totalUSDAmount = totalUSDAmount.add(usdAmount);
+            // update sold Amount
+            soldAmount = soldAmount.add(usdAmount);
 
-            owner.transfer(weiAmount);
+            // track ether from beneficiary
+            ethAmount[beneficiary] = ethAmount[beneficiary].add(weiAmount);
+
             TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
             addToLedgerAfterSell(beneficiary, "ETH", weiAmount, tokens);
         } else {
@@ -348,23 +356,23 @@ contract HotokenReservation is StandardToken, Ownable {
     // function getListOfClaimTokens() public view onlyOwner returns (string) {
     //     var ledgerCSV = new strings.slice[]();
 
-        // add header for csv
-        // var headers = new strings.slice[](2);
-        // headers[0] = "eth_address".toSlice();
-        // headers[1] = "htkn_address".toSlice();
-        // ledgerCSV[0] = ",".toSlice().join(headers).toSlice();
+    //     // add header for csv
+    //     var headers = new strings.slice[](2);
+    //     headers[0] = "eth_address".toSlice();
+    //     headers[1] = "htkn_address".toSlice();
+    //     ledgerCSV[0] = ",".toSlice().join(headers).toSlice();
         
-        // for (uint i = 0; i < ledgerMap[_address].length; i++) {
-        //     var parts = new strings.slice[](6);    
-        //     Ledger ledger = ledgerMap[_address][i];
-        //     parts[0] = strings.uintToBytes(ledger.datetime).toSliceB32();
-        //     parts[1] = ledger.currency.toSlice();
-        //     parts[2] = strings.uintToBytes(ledger.quantity).toSliceB32();
-        //     parts[3] = strings.uintToBytes(ledger.usdRate).toSliceB32();
-        //     parts[4] = strings.uintToBytes(ledger.discount).toSliceB32();
-        //     parts[5] = strings.uintToBytes(ledger.tokenQuantity).toSliceB32();
-        //     ledgerCSV[i + 1] = ",".toSlice().join(parts).toSlice();
-        // }
+    //     for (uint i = 0; i < ledgerMap[_address].length; i++) {
+    //         var parts = new strings.slice[](6);    
+    //         Ledger ledger = ledgerMap[_address][i];
+    //         parts[0] = strings.uintToBytes(ledger.datetime).toSliceB32();
+    //         parts[1] = ledger.currency.toSlice();
+    //         parts[2] = strings.uintToBytes(ledger.quantity).toSliceB32();
+    //         parts[3] = strings.uintToBytes(ledger.usdRate).toSliceB32();
+    //         parts[4] = strings.uintToBytes(ledger.discount).toSliceB32();
+    //         parts[5] = strings.uintToBytes(ledger.tokenQuantity).toSliceB32();
+    //         ledgerCSV[i + 1] = ",".toSlice().join(parts).toSlice();
+    //     }
 
     //     return "\n".toSlice().join(ledgerCSV);
     // }
@@ -402,6 +410,37 @@ contract HotokenReservation is StandardToken, Ownable {
     }
 
     /**
+    * This function permits anybody to withdraw the funds they have
+    * contributed if and only if the deadline has passed and the
+    * funding goal was not reached.
+    */
+    function refund() public onlyWhenPauseDisabled {
+        require(saleFinished);
+        // require(soldAmount < minimumSold);
+        require(msg.sender != owner);
+        require(whitelist[msg.sender] == 1);
+        require(ledgerMap[msg.sender].length > 0);
+
+        uint amount = ethAmount[msg.sender];
+        ethAmount[msg.sender] = 0;
+        if (amount > 0) {
+            msg.sender.transfer(amount);
+            RefundTransfer(msg.sender, amount);
+            refundAmount = refundAmount.add(amount);
+        }
+    }
+
+    /**
+    * withdraw ether from contract for owner
+    */
+    function withDrawOnlyOwner() public onlyOwner {
+        require(saleFinished);
+        uint balanceToSend = this.balance;
+        msg.sender.transfer(balanceToSend);
+        WithdrawOnlyOwner(msg.sender, balanceToSend);
+    }
+
+    /**
     * @dev Burns a specific amount of tokens.
     */
     function burn() public onlyOwner {
@@ -416,6 +455,8 @@ contract HotokenReservation is StandardToken, Ownable {
 
     // Kill the contract
     function kill() public onlyOwner {
+        require(saleFinished);
+        require(this.balance == 0);
         selfdestruct(owner);
     }
 }
