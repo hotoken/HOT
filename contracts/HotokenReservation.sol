@@ -97,11 +97,11 @@ contract HotokenReservation is StandardToken, Ownable {
     }
 
     // fallback function can be used to buy tokens
-    function () external payable onlyWhenPauseDisabled onlySaleIsNotFinished {
+    function () external payable onlyWhenPauseDisabled {
         buyTokens(msg.sender);
     }
 
-    function buyTokens(address beneficiary) public payable onlyWhenPauseDisabled onlySaleIsNotFinished {
+    function buyTokens(address beneficiary) public payable onlyWhenPauseDisabled {
         uint256 weiAmount = msg.value;
         uint256 usdRate = usdRateMap["ETH"];
 
@@ -326,7 +326,8 @@ contract HotokenReservation is StandardToken, Ownable {
     */
     function claimTokens(string _address) public onlyWhenPauseDisabled {
         require(saleFinished);
-        require(tokenSold >= minimumSold);
+        // reach the minimumSold
+        // require(tokenSold >= minimumSold);
         require(msg.sender != owner);
         require(whitelist[msg.sender] == 1);
         require(ledgerMap[msg.sender].length > 0);
