@@ -312,6 +312,11 @@ contract HotokenReservation is StandardToken, Ownable {
         return _discountRate.add(10 ** uint(2)).mul(HTKN_PER_USD).mul(usdRate);
     }
 
+    function applyDiscount(uint _amount) public view returns (uint) {
+      uint _discountRate = getDiscountRate();
+      return _discountRate.add(10 ** uint(2)).mul(_amount).div(100);
+    }
+
 
     /**
     * To set current usd rate
@@ -352,7 +357,7 @@ contract HotokenReservation is StandardToken, Ownable {
     }
 
     function btcToUsd(uint _btc) public view returns (uint) {
-      return toUsd("BTC", _wei);
+      return toUsd("BTC", _btc);
     }
 
     function usdToTokens(uint _usd) public view returns (uint) {

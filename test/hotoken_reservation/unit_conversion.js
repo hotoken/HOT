@@ -11,6 +11,17 @@ contract('HotokenReservation', function(accounts) {
       const returnedRate = await h.getConversionRate.call('ETH')
       expect(returnedRate.toNumber()).to.be.equal(rate)
     })
+
+    it('should not be called by other who is not the owner', async function() {
+      const user1 = accounts[1]
+      try {
+        const h = await HotokenReservation.deployed()
+        const rate = 42525; // 425.25$ per 1 ETH
+        await h.setConversionRate('ETH', rate, {from: user1})
+      } catch (e) {
+        expect(e.toString()).to.be.include('revert')
+      }
+    })
   })
 
   describe('weiToUsd', function() {
