@@ -116,12 +116,6 @@ contract HotokenReservation is StandardToken, Ownable {
         uint256 amount = msg.value; /* wei */
         uint256 usd = toUsd("ETH", amount); /* $1e-18 */
 
-        /*uint256 usdRate = usdRateMap["ETH"];*/
-
-        // calculate token amount to be created problem
-        /*uint256 usdAmount = weiAmount.mul(usdRate).div(10 ** uint256(decimals));
-        uint256 tokens = weiAmount.mul(calculateRate("ETH")).div(10 ** uint(2));*/
-
         uint256 toBuyTokens = applyDiscount(usdToTokens(usd));
         uint256 updatedSoldTokens = tokenSold.add(toBuyTokens);
 

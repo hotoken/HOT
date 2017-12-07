@@ -69,6 +69,61 @@ contract('HotokenReservation', function(accounts) {
   })
 })
 
+contract('HotokenReservation', function(accounts) {
+  describe.only('buyTokens', function() {
+    it('should update sold tokens', async function() {
+      const h = await HotokenReservation.deployed()
+      const owner = accounts[0]
+      const user1 = accounts[1]
+
+      await h.addToWhitelist(user1)
+      await h.setPause(false)
+      await h.setConversionRate('ETH', 45000) // 1ETH = $450.00
+
+      let amount = web3.toWei(2, 'ether')
+
+      await h.sendTransaction({from: user1, value: amount})
+      let sold = await h.getTokenSold()
+
+      expect(sold.toNumber()).to.be.equal(14850 * 10 ** 18)
+    })
+  })
+})
+
+contract('HotokenReservation', function(accounts) {
+  describe.only('buyTokens', function() {
+    it('should update sold tokens when sold multiple times', async function() {
+      const h = await HotokenReservation.deployed()
+      const user1 = accounts[1]
+
+      await h.addToWhitelist(user1)
+      await h.setPause(false)
+      await h.setConversionRate('ETH', 45000) // 1ETH = $450.00
+
+      let amount = web3.toWei(2, 'ether')
+
+      await h.sendTransaction({from: user1, value: amount})
+      let sold = await h.getTokenSold()
+
+      expect(sold.toNumber()).to.be.equal(14850 * 10 ** 18)
+
+      const user2 = accounts[2]
+      await h.addToWhitelist(user1)
+
+      await h.sendTransaction({from: user1, value: 1 * 10 ** 18})
+      sold = await h.getTokenSold()
+
+      expect(sold.toNumber()).to.be.equal(22275 * 10 ** 18)
+    })
+  })
+})
+
+
+
+
+
+/* TODO Removed these legacy tests */
+
 contract('HotokenReservation buy token', function(accounts) {
   let hotoken
 
