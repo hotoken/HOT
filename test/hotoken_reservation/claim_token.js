@@ -104,7 +104,7 @@ contract('HotokenReservation claim tokens', function(accounts) {
     expect(addressMap).to.be.empty
   })
 
-  it('should be able to get list of claim tokens', async function() {
+  it.skip('should be able to get list of claim tokens', async function() {
     const user2 = accounts[2]
 
     await hotoken.setPause(false)

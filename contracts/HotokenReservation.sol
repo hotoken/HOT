@@ -6,7 +6,7 @@ import './math/SafeMath.sol';
 import './utils/strings.sol';
 
 contract HotokenReservation is StandardToken, Ownable {
-    
+
     using SafeMath for uint256;
     using strings for *;
 
@@ -82,7 +82,7 @@ contract HotokenReservation is StandardToken, Ownable {
     modifier onlySaleIsNotFinished() {
         require(!saleFinished);
         _;
-    } 
+    }
 
     function HotokenReservation() public {
         totalSupply = INITIAL_SUPPLY;
@@ -122,7 +122,7 @@ contract HotokenReservation is StandardToken, Ownable {
         require(beneficiary != address(0));
         require(owner != beneficiary);
         require(whitelist[beneficiary] == 1);
-        
+
         if ((minimumPurchase <= usdAmount) || exists) {
             require(exceedSupply <= INITIAL_SUPPLY);
             // increase token sold
@@ -259,9 +259,9 @@ contract HotokenReservation is StandardToken, Ownable {
         headers[4] = "discount_rate".toSlice();
         headers[5] = "token_quantity".toSlice();
         ledgerCSV[0] = ",".toSlice().join(headers).toSlice();
-        
+
         for (uint i = 0; i < ledgerMap[_address].length; i++) {
-            var parts = new strings.slice[](6);    
+            var parts = new strings.slice[](6);
             Ledger ledger = ledgerMap[_address][i];
             parts[0] = strings.uintToBytes(ledger.datetime).toSliceB32();
             parts[1] = ledger.currency.toSlice();
@@ -327,6 +327,35 @@ contract HotokenReservation is StandardToken, Ownable {
         return usdRateMap[_currency];
     }
 
+    mapping(string=>uint) conversionRateMap;
+
+    /**
+    * To set conversion rate from supported currencies to $e-18
+    * @param _currency eg. ["ETH", "BTC", "Cent"] (string)
+    * @param _rate conversion rate in cent; how many cent for 1 currency unit (int)
+    */
+    function setConversionRate(string _currency, uint _rate) public onlyOwner {
+        conversionRateMap[_currency] = _rate;
+    }
+
+    function getConversionRate(string _currency) public view returns (uint) {
+        return conversionRateMap[_currency];
+    }
+
+    function weiToUsd(uint _wei) public view returns (uint) {
+      uint rateInCents = getConversionRate("ETH");
+      return _wei.mul(rateInCents).mul(10 ** uint(decimals-2)).div(10 ** uint(decimals));
+    }
+
+    function btcToUsd(uint _btc) public view returns (uint) {
+      uint rateInCents = getConversionRate("BTC");
+      return _btc.mul(rateInCents).mul(10 ** uint(decimals-2)).div(10 ** uint(decimals));
+    }
+
+    function usdToTokens(uint _usd) public view returns (uint) {
+      return _usd.mul(10);
+    }
+
     /**
     * To set minimum purchase
     * @param _minimum in usd (int)
@@ -363,34 +392,34 @@ contract HotokenReservation is StandardToken, Ownable {
     /**
     * Get the list of all claimTokens
     */
-    function getListOfClaimTokens() public view onlyOwner returns (string) {
-        var listOfClaimTokensCSV = new strings.slice[](whiteListInfo.length + uint(1));
-        // add header for csv
-        var headers = new strings.slice[](2);
-        headers[0] = "eth_address".toSlice();
-        headers[1] = "htkn_address".toSlice();
-        listOfClaimTokensCSV[0] = ",".toSlice().join(headers).toSlice();
+    // function getListOfClaimTokens() public view onlyOwner returns (string) {
+    //     var listOfClaimTokensCSV = new strings.slice[](whiteListInfo.length + uint(1));
+    //     // add header for csv
+    //     var headers = new strings.slice[](2);
+    //     headers[0] = "eth_address".toSlice();
+    //     headers[1] = "htkn_address".toSlice();
+    //     listOfClaimTokensCSV[0] = ",".toSlice().join(headers).toSlice();
         
-        for (uint i = 0 ; i < whiteListInfo.length ; i++) {
-            if (whiteListInfo[i].exists == 1) {
-                address buyer = whiteListInfo[i].buyer;
+    //     for (uint i = 0 ; i < whiteListInfo.length ; i++) {
+    //         if (whiteListInfo[i].exists == 1) {
+    //             address buyer = whiteListInfo[i].buyer;
 
-                // convert address to string
-                bytes memory b = new bytes(20);
-                for (uint j = 0; j < 20; j++) {
-                    b[i] = byte(uint8(uint(buyer) / (2**(8*(19 - i)))));
-                }
+    //             // convert address to string
+    //             bytes memory b = new bytes(20);
+    //             for (uint j = 0; j < 20; j++) {
+    //                 b[i] = byte(uint8(uint(buyer) / (2**(8*(19 - i)))));
+    //             }
 
-                var parts = new strings.slice[](2);
+    //             var parts = new strings.slice[](2);
 
-                parts[0] = string(b).toSlice();
-                parts[1] = claimTokenMap[buyer].toSlice();
-                listOfClaimTokensCSV[i + 1] = ",".toSlice().join(parts).toSlice();
-            }
-        }
+    //             parts[0] = string(b).toSlice();
+    //             parts[1] = claimTokenMap[buyer].toSlice();
+    //             listOfClaimTokensCSV[i + 1] = ",".toSlice().join(parts).toSlice();
+    //         }
+    //     }
         
-        return "\n".toSlice().join(listOfClaimTokensCSV);
-    }
+    //     return "\n".toSlice().join(listOfClaimTokensCSV);
+    // }
 
     function transfer(address _to, uint256 _value) public onlyOwner validDestination(_to) returns (bool) {
         return super.transfer(_to, _value);

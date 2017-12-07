@@ -3,7 +3,7 @@ const HotokenReservation = artifacts.require('./HotokenReservation')
 
 contract('HotokenReservation, burn tokens', function(accounts) {
   let hotoken
-  
+
   beforeEach(async function() {
     hotoken = await HotokenReservation.new()
   })
@@ -11,7 +11,7 @@ contract('HotokenReservation, burn tokens', function(accounts) {
   it('should be able to burn tokens', async function() {
     // For increase tokenSold
     const user1 = accounts[1]
-    
+
     await hotoken.setPause(false)
     await hotoken.addToWhitelist(user1)
 
@@ -52,7 +52,7 @@ contract('HotokenReservation, burn tokens', function(accounts) {
     }
   })
 
-  it('should not be able to burn tokens if sale finish flag is false', async function() {    
+  it('should not be able to burn tokens if sale finish flag is false', async function() {
     // Finish Sale
     await hotoken.setSaleFinished(false)
     try {
