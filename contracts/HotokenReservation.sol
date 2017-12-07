@@ -213,7 +213,7 @@ contract HotokenReservation is StandardToken, Ownable {
         require(exceedSupply <= totalSupply);
 
         uint256 usdRate = usdRateMap[_currency];
-        
+
         uint _currentTime = now;
         uint _usdRate = usdRateMap[_currency];
         uint _discount = getDiscountRate();
@@ -224,7 +224,7 @@ contract HotokenReservation is StandardToken, Ownable {
         // increase tokenSold
         tokenSold = tokenSold.add(_tokens);
         // decrease owner tokens balance
-        balances[msg.sender] = balances[msg.sender].sub(_tokens); 
+        balances[msg.sender] = balances[msg.sender].sub(_tokens);
 
         AddToLedger(_currentTime, _currency, _amount, _usdRate, _discount, _tokens);
         ledgerMap[_address].push(Ledger(_currentTime, _currency, _amount, _usdRate, _discount, _tokens));
@@ -342,14 +342,17 @@ contract HotokenReservation is StandardToken, Ownable {
         return conversionRateMap[_currency];
     }
 
+    function toUsd(string _currency, uint _unit) public view returns (uint) {
+      uint rateInCents = getConversionRate(_currency);
+      return _unit.mul(rateInCents).mul(10 ** uint(decimals-2)).div(10 ** uint(decimals));
+    }
+
     function weiToUsd(uint _wei) public view returns (uint) {
-      uint rateInCents = getConversionRate("ETH");
-      return _wei.mul(rateInCents).mul(10 ** uint(decimals-2)).div(10 ** uint(decimals));
+      return toUsd("ETH", _wei);
     }
 
     function btcToUsd(uint _btc) public view returns (uint) {
-      uint rateInCents = getConversionRate("BTC");
-      return _btc.mul(rateInCents).mul(10 ** uint(decimals-2)).div(10 ** uint(decimals));
+      return toUsd("BTC", _wei);
     }
 
     function usdToTokens(uint _usd) public view returns (uint) {
@@ -399,7 +402,7 @@ contract HotokenReservation is StandardToken, Ownable {
     //     headers[0] = "eth_address".toSlice();
     //     headers[1] = "htkn_address".toSlice();
     //     listOfClaimTokensCSV[0] = ",".toSlice().join(headers).toSlice();
-        
+
     //     for (uint i = 0 ; i < whiteListInfo.length ; i++) {
     //         if (whiteListInfo[i].exists == 1) {
     //             address buyer = whiteListInfo[i].buyer;
@@ -417,7 +420,7 @@ contract HotokenReservation is StandardToken, Ownable {
     //             listOfClaimTokensCSV[i + 1] = ",".toSlice().join(parts).toSlice();
     //         }
     //     }
-        
+
     //     return "\n".toSlice().join(listOfClaimTokensCSV);
     // }
 
