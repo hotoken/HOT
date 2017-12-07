@@ -31,15 +31,15 @@ contract('HotokenReservation', function(accounts) {
       await h.setConversionRate('ETH', rate)
 
       let wei = 1 * 10 ** 18 // 1ETH
-      let s = await h.weiToUsd(wei)
+      let s = await h.toUsd('ETH', wei)
       expect(s.toNumber()).to.be.equal(42525 * 10 ** 16)
 
       wei = 5 * 10 ** 17 // 0.5ETH
-      s = await h.weiToUsd(wei)
+      s = await h.toUsd('ETH', wei)
       expect(s.toNumber()).to.be.equal(212625 * 10 ** 15)
 
       wei = 20 * 10 ** 18 // 20ETH
-      s = await h.weiToUsd(wei)
+      s = await h.toUsd('ETH', wei)
       expect(s.toNumber()).to.be.equal(850500 * 10 ** 16)
     })
 
@@ -49,15 +49,15 @@ contract('HotokenReservation', function(accounts) {
       await h.setConversionRate('ETH', rate)
 
       let wei = 1 * 10 ** 18 // 1ETH
-      let s = await h.weiToUsd(wei)
+      s = await h.toUsd('ETH', wei)
       expect(s.toNumber()).to.be.equal(30050 * 10 ** 16)
 
       wei = 8 * 10 ** 17 // 0.8ETH
-      s = await h.weiToUsd(wei)
+      s = await h.toUsd('ETH', wei)
       expect(s.toNumber()).to.be.equal(24040 * 10 ** 16)
 
       wei = 15 * 10 ** 18 // 15ETH
-      s = await h.weiToUsd(wei)
+      s = await h.toUsd('ETH', wei)
       expect(s.toNumber()).to.be.equal(450750 * 10 ** 16)
     })
   })
@@ -88,15 +88,15 @@ contract('HotokenReservation', function(accounts) {
       await h.setConversionRate('BTC', rate)
 
       let btc = 1 * 10 ** 18 // 1BTC
-      let s = await h.btcToUsd(btc)
+      let s = await h.toUsd('BTC', btc)
       expect(s.toNumber()).to.be.equal(1100032 * 10 ** 16)
 
       btc = 5 * 10 ** 17 // 0.5BTC
-      s = await h.btcToUsd(btc)
+      s = await h.toUsd('BTC', btc)
       expect(s.toNumber()).to.be.equal(550016 * 10 ** 16)
 
       btc = 2025 * 10 ** 16 // 20.25BTC
-      s = await h.btcToUsd(btc)
+      s = await h.toUsd('BTC', btc)
       expect(s.toNumber()).to.be.equal(22275648 * 10 ** 16)
     })
   })

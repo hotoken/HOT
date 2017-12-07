@@ -2,7 +2,7 @@ const {expect} = require('chai')
 const HotokenReservation = artifacts.require('./HotokenReservation')
 
 contract('HotokenReservation', function(accounts) {
-  describe.only('buyTokens', function() {
+  describe('buyTokens', function() {
     it('should be allocate buyer tokens', async function() {
       const h = await HotokenReservation.deployed()
       const owner = accounts[0]
@@ -22,8 +22,9 @@ contract('HotokenReservation', function(accounts) {
   })
 })
 
+// We need to seperate contract block to make them independent
 contract('HotokenReservation', function(accounts) {
-  describe.only('buyTokens', function() {
+  describe('buyTokens', function() {
     it('should apply the discount rate', async function() {
       const h = await HotokenReservation.deployed()
       const owner = accounts[0]
@@ -40,6 +41,30 @@ contract('HotokenReservation', function(accounts) {
 
       let user1balance = await h.balanceOf(user1)
       expect(user1balance.toNumber()).to.be.equal(11250 * 10 ** 18)
+    })
+  })
+})
+
+contract('HotokenReservation', function(accounts) {
+  describe('buyTokens', function() {
+    it('should let buyer buy multiple times', async function() {
+      const h = await HotokenReservation.deployed()
+      const owner = accounts[0]
+      const user1 = accounts[1]
+
+      await h.addToWhitelist(user1)
+      await h.setPause(false)
+      await h.setConversionRate('ETH', 45000) // 1ETH = $450.00
+
+      await h.sendTransaction({from: user1, value: 2 * 10 ** 18})
+      let user1balance = await h.balanceOf(user1)
+      expect(user1balance.toNumber()).to.be.equal(14850 * 10 ** 18)
+
+      // second buy
+      await h.sendTransaction({from: user1, value: 5 * 10 ** 16}) // 0.05ETH
+      user1balance = await h.balanceOf(user1)
+      // sum = 14850 + 371.25
+      expect(user1balance.toNumber()).to.be.equal(1522125 * 10 ** 16)
     })
   })
 })

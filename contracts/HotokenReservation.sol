@@ -114,9 +114,8 @@ contract HotokenReservation is StandardToken, Ownable {
         require(whitelist[beneficiary] == 1);
 
         uint256 amount = msg.value; /* wei */
-        uint256 usd = weiToUsd(amount); /* $1e-18 */
+        uint256 usd = toUsd("ETH", amount); /* $1e-18 */
 
-        require(usd >= minimumPurchase);
         /*uint256 usdRate = usdRateMap["ETH"];*/
 
         // calculate token amount to be created problem
@@ -356,14 +355,6 @@ contract HotokenReservation is StandardToken, Ownable {
     function toUsd(string _currency, uint _unit) public view returns (uint) {
       uint rateInCents = getConversionRate(_currency);
       return _unit.mul(rateInCents).mul(10 ** uint(decimals-2)).div(10 ** uint(decimals));
-    }
-
-    function weiToUsd(uint _wei) public view returns (uint) {
-      return toUsd("ETH", _wei);
-    }
-
-    function btcToUsd(uint _btc) public view returns (uint) {
-      return toUsd("BTC", _btc);
     }
 
     function usdToTokens(uint _usd) public view returns (uint) {
