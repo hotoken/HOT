@@ -196,6 +196,18 @@ contract('HotokenReservation', function(accounts) {
         await h.sendTransaction({from: user2, value: 1 * 10 ** 18})
       })
     })
+    it('should not allow first buy lower than min purchase', async function() {
+      const h = await HotokenReservation.deployed()
+      const user3 = accounts[3]
+
+      await h.setPause(false)
+      await h.addToWhitelist(user3)
+      await h.setConversionRate('ETH', 45000) // 1ETH = $450.00
+
+      shouldRevert(async () => {
+        await h.sendTransaction({from: user3, value: 1 * 10 ** 10})
+      })
+    })
   })
 })
 
