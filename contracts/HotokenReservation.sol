@@ -328,6 +328,15 @@ contract HotokenReservation is StandardToken, Ownable {
       return _wei.mul(rateInCents).mul(10 ** uint(decimals-2)).div(10 ** uint(decimals));
     }
 
+    function btcToUsd(uint _btc) public view returns (uint) {
+      uint rateInCents = getConversionRate("BTC");
+      return _btc.mul(rateInCents).mul(10 ** uint(decimals-2)).div(10 ** uint(decimals));
+    }
+
+    function usdToTokens(uint _usd) public view returns (uint) {
+      return _usd.mul(10);
+    }
+
     /**
     * To set minimum purchase
     * @param _minimum in usd (int)
