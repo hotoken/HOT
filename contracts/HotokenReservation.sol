@@ -338,27 +338,27 @@ contract HotokenReservation is StandardToken, Ownable {
     * @param _currency eg. ["ETH", "BTC", "Cent"] (string)
     * @param _rate conversion rate in cent; how many cent for 1 currency unit (int)
     */
-    function setConversionRate(string _currency, uint _rate) public onlyOwner {
-        conversionRateMap[_currency] = _rate;
-    }
+    // function setConversionRate(string _currency, uint _rate) public onlyOwner {
+    //     conversionRateMap[_currency] = _rate;
+    // }
 
-    function getConversionRate(string _currency) public view returns (uint) {
-        return conversionRateMap[_currency];
-    }
+    // function getConversionRate(string _currency) public view returns (uint) {
+    //     return conversionRateMap[_currency];
+    // }
 
-    function weiToUsd(uint _wei) public view returns (uint) {
-      uint rateInCents = getConversionRate("ETH");
-      return _wei.mul(rateInCents).mul(10 ** uint(decimals-2)).div(10 ** uint(decimals));
-    }
+    // function weiToUsd(uint _wei) public view returns (uint) {
+    //   uint rateInCents = getConversionRate("ETH");
+    //   return _wei.mul(rateInCents).mul(10 ** uint(decimals-2)).div(10 ** uint(decimals));
+    // }
 
-    function btcToUsd(uint _btc) public view returns (uint) {
-      uint rateInCents = getConversionRate("BTC");
-      return _btc.mul(rateInCents).mul(10 ** uint(decimals-2)).div(10 ** uint(decimals));
-    }
+    // function btcToUsd(uint _btc) public view returns (uint) {
+    //   uint rateInCents = getConversionRate("BTC");
+    //   return _btc.mul(rateInCents).mul(10 ** uint(decimals-2)).div(10 ** uint(decimals));
+    // }
 
-    function usdToTokens(uint _usd) public view returns (uint) {
-      return _usd.mul(10);
-    }
+    // function usdToTokens(uint _usd) public view returns (uint) {
+    //   return _usd.mul(10);
+    // }
 
     /**
     * To set minimum purchase
@@ -393,45 +393,20 @@ contract HotokenReservation is StandardToken, Ownable {
         return bytes(claimTokenMap[msg.sender]).length > 0;
     }
 
-    /**
-    * Get the list of all claimTokens
-    */
-    // function getListOfClaimTokens() public view onlyOwner returns (string) {
-    //     var listOfClaimTokensCSV = new strings.slice[](whiteListInfo.length + uint(1));
-    //     // add header for csv
-    //     var headers = new strings.slice[](2);
-    //     headers[0] = "eth_address".toSlice();
-    //     headers[1] = "htkn_address".toSlice();
-    //     listOfClaimTokensCSV[0] = ",".toSlice().join(headers).toSlice();
-        
-    //     for (uint i = 0 ; i < whiteListInfo.length ; i++) {
-    //         if (whiteListInfo[i].exists == 1) {
-    //             address buyer = whiteListInfo[i].buyer;
+    function getClaimAddressFromAddress(address _address) public view onlyOwner returns (string) {
+       return claimTokenMap[_address];
+    }
 
-    //             // convert address to string
-    //             // bytes memory b = new bytes(20);
-    //             // for (uint j = 0; j < 20; j++) {
-    //             //     b[j] = byte(uint8(uint(buyer) / (2**(8*(19 - j)))));
-    //             // }
-
-    //             var parts = new strings.slice[](2);
-
-    //             parts[0] = string(toBytes(buyer)).toSlice();
-    //             parts[1] = claimTokenMap[buyer].toSlice();
-    //             listOfClaimTokensCSV[i + 1] = ",".toSlice().join(parts).toSlice();
+    // function getClaimAddressFromManyAddresses(address[] _addresses) public view onlyOwner returns (bytes[]) {
+    //     bytes32[_addresses.length] bytesArray
+    //     for (uint i = 0 ; i < _addresses.length ; i++) {
+    //         for (uint j = 0 ; j < whiteListInfo.length ; j++) {
+    //             if (whiteListInfo[j].buyer == _addresses[i] && whiteListInfo[j].exists == 1) {
+    //                 out.push(claimTokenMap[_addresses[i]]);
+    //             }
     //         }
     //     }
-        
-    //     return "\n".toSlice().join(listOfClaimTokensCSV);
-    // }
-
-    // function toBytes(address a) internal view returns (bytes b) {
-    //     assembly {
-    //         let m := mload(0x40)
-    //         mstore(add(m, 20), xor(0x140000000000000000000000000000000000000000, a))
-    //         mstore(0x40, add(m, 52))
-    //         b := m
-    //     }
+    //     return out;
     // }
 
     function transfer(address _to, uint256 _value) public onlyOwner validDestination(_to) returns (bool) {

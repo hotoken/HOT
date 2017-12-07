@@ -104,7 +104,29 @@ contract('HotokenReservation claim tokens', function(accounts) {
     expect(addressMap).to.be.empty
   })
 
-  it.skip('should be able to get list of claim tokens', async function() {
+  it.skip('should not be able to get list of claim tokens from many address in whitelist if not call by owner', async function() {
+    const user2 = accounts[2]
+
+    await hotoken.setPause(false)
+    await hotoken.setSaleFinished(true)
+    await hotoken.addToWhitelist(user1)
+    await hotoken.addToWhitelist(user2)
+
+    const amountEther = 3
+    const amountWei = web3.toWei(amountEther, 'ether')
+
+    await hotoken.sendTransaction({from: user1, value: amountWei})
+    await hotoken.sendTransaction({from: user2, value: amountWei})
+
+    await hotoken.claimTokens("anotherAddress", {from: user1})
+
+    const whitelist = [user1, user2]
+
+    const listOfClaim = await hotoken.getClaimAddressFromManyAddresses()
+    console.log(listOfClaim)
+  })
+
+  it.skip('should be able to get list of claim tokens from many address in whitelist', async function() {
     const user2 = accounts[2]
 
     await hotoken.setPause(false)
