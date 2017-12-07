@@ -1,5 +1,6 @@
 const {expect} = require('chai')
 const HotokenReservation = artifacts.require('./HotokenReservation')
+const shouldRevertAsync = require('../shouldRevertAsync')
 
 contract('HotokenReservation', function(accounts) {
   describe('buyTokens', function() {
@@ -167,7 +168,20 @@ contract('HotokenReservation', function(accounts) {
   })
 })
 
+contract('HotokenReservation', function(accounts) {
+  describe.only('buyTokens', function() {
+    it('should not let owner buy tokens', async function() {
+      const h = await HotokenReservation.deployed()
+      const owner = accounts[0]
 
+      await h.setPause(false)
+
+      shouldRevertAsync(async () => {
+        await h.sendTransaction({from: owner, value: 1 * 10 ** 18})
+      })
+    })
+  })
+})
 
 
 
