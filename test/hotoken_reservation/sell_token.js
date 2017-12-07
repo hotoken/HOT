@@ -42,7 +42,7 @@ contract('HotokenReservation buy token', function(accounts) {
     // need to check balance of owner
   })
 
-  it('check the tokens that user received, it comes from correct calculation', async function() {
+  it.skip('check the tokens that user received, it comes from correct calculation', async function() {
     const owner = accounts[0]
     const user4 = accounts[4]
 
@@ -92,7 +92,7 @@ contract('HotokenReservation buy token', function(accounts) {
 
     // set mininum purchase from 300 to 100
     await hotoken.setMinimumPurchase(100)
-    
+
     const amountEther = 4
     const amountWei = web3.toWei(amountEther, 'ether')
 
@@ -132,7 +132,7 @@ contract('HotokenReservation buy token', function(accounts) {
     } catch (e) {
       expect(e.toString()).to.be.include('revert')
     }
-    
+
     const user1BalanceAfter = (await hotoken.balanceOf(user1)).toNumber()
     const tokenSoldAfter = (await hotoken.getTokenSold()).toNumber()
 
@@ -163,7 +163,7 @@ contract('HotokenReservation buy token', function(accounts) {
 
     // need to check balance of owner
   })
-  
+
   it('should not be able to retrieve ether if contract is paused', async function() {
     const user1 = accounts[1]
 

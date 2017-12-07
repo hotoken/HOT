@@ -3,7 +3,7 @@ const HotokenReservation = artifacts.require('./HotokenReservation')
 
 contract('HotokenReservation, burn tokens', function(accounts) {
   let hotoken
-  
+
   beforeEach(async function() {
     hotoken = await HotokenReservation.new()
   })
@@ -11,7 +11,7 @@ contract('HotokenReservation, burn tokens', function(accounts) {
   it.skip('should be able to burn tokens', async function() {
     // For increase tokenSold
     const user1 = accounts[1]
-    
+
     await hotoken.setPause(false)
     await hotoken.addToWhitelist(user1)
 
@@ -22,12 +22,24 @@ contract('HotokenReservation, burn tokens', function(accounts) {
 
     // Finish Sale
     await hotoken.setSaleFinished(true)
-    await hotoken.burn()
 
-    expect((await hotoken.totalSupply.call()).toNumber()).to.be.equal(3000000000000000000000000000 - 6600000000000000000000)
+    const totalSupplyBefore = await hotoken.totalSupply.call()
+    const tokenSold = await hotoken.getTokenSold()
+
+    const tx = await hotoken.burn()
+
+    const totalSupplyAfter = await hotoken.totalSupply.call()
+
+    expect(totalSupplyAfter).to.be.equal(3000000000000000000000000000 - 6600000000000000000000)
     expect((await hotoken.balanceOf.call(accounts[0])).toNumber()).to.be.equal(0)
 
-    // need to check balance of owner
+    // TODO: need to check balance of owner
+
+    // test event Burn
+    expect(tx.logs).to.be.ok
+    expect(tx.logs[0].event).to.be.equal('Burn')
+    expect(tx.logs[0].args.burner).to.be.equal(accounts[0])
+    expect(tx.logs[0].args.value.toNumber()).to.be.equal(totalSupplyBefore.minus(tokenSold).toNumber())
   })
 
   it('should not be able to burn tokens if not call by another address', async function() {
@@ -40,7 +52,7 @@ contract('HotokenReservation, burn tokens', function(accounts) {
     }
   })
 
-  it('should not be able to burn tokens if sale finish flag is false', async function() {    
+  it('should not be able to burn tokens if sale finish flag is false', async function() {
     // Finish Sale
     await hotoken.setSaleFinished(false)
     try {

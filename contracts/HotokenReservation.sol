@@ -6,7 +6,7 @@ import './math/SafeMath.sol';
 import './utils/strings.sol';
 
 contract HotokenReservation is StandardToken, Ownable {
-    
+
     using SafeMath for uint256;
     using strings for *;
 
@@ -38,8 +38,9 @@ contract HotokenReservation is StandardToken, Ownable {
     uint256 public minimumPurchase;
     bool    public saleFinished = false;
     uint256 public minimumSold;
-    uint256 public totalUSDAmount;
-    Whitelist[] public whiteListInfo;
+    uint256 public soldAmount;
+    uint256 public refundAmount;
+    Whitelist[] public whiteListInfo; // for iterate claimMap and ledgerMap
 
     // Enum
     enum DiscountRate {ZERO, TWENTY_FIVE, FOURTY_FIVE, SIXTY_FIVE}
@@ -48,8 +49,10 @@ contract HotokenReservation is StandardToken, Ownable {
     // Mapping
     mapping(address=>uint) public whitelist;
     mapping(address=>Ledger[]) public ledgerMap;
-    mapping(address=>string) claimTokenMap;
+    mapping(address=>string) public claimTokenMap;
     mapping(string=>uint) usdRateMap;
+    mapping(address=>uint256) public ethAmount;
+    mapping(string=>uint) conversionRateMap;
 
     // Events
     /**
@@ -61,6 +64,9 @@ contract HotokenReservation is StandardToken, Ownable {
     */
     event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
     event Burn(address indexed burner, uint256 value);
+    event RefundTransfer(address _backer, uint _amount);
+    event WithdrawOnlyOwner(address _owner, uint _amount);
+    event AddToLedger(uint _currentTime, string _currency, uint _amount, uint _usdRate, uint _discount, uint _tokens);
 
     // Modifiers
     modifier validDestination(address _to) {
@@ -77,7 +83,7 @@ contract HotokenReservation is StandardToken, Ownable {
     modifier onlySaleIsNotFinished() {
         require(!saleFinished);
         _;
-    } 
+    }
 
     function HotokenReservation() public {
         totalSupply = INITIAL_SUPPLY;
@@ -93,7 +99,8 @@ contract HotokenReservation is StandardToken, Ownable {
         minimumPurchase = 3 * (10 ** uint(2));
         minimumSold = 2 * (10 ** uint(6));
 
-        totalUSDAmount = 0;
+        soldAmount = 0;
+        refundAmount = 0;
     }
 
     // fallback function can be used to buy tokens
@@ -116,10 +123,10 @@ contract HotokenReservation is StandardToken, Ownable {
         require(beneficiary != address(0));
         require(owner != beneficiary);
         require(whitelist[beneficiary] == 1);
-        
+
         if ((minimumPurchase <= usdAmount) || exists) {
             require(exceedSupply <= INITIAL_SUPPLY);
-            // update state
+            // increase token sold
             tokenSold = tokenSold.add(tokens);
 
             // transfer token to purchaser
@@ -129,11 +136,14 @@ contract HotokenReservation is StandardToken, Ownable {
             // decrease balance of owner
             balances[owner] = balances[owner].sub(tokens);
 
-            totalUSDAmount = totalUSDAmount.add(usdAmount);
+            // update sold Amount
+            soldAmount = soldAmount.add(usdAmount);
 
-            owner.transfer(weiAmount);
+            // track ether from beneficiary
+            ethAmount[beneficiary] = ethAmount[beneficiary].add(weiAmount);
+
             TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
-            addToLedgerAfterSell(beneficiary, "ETH", weiAmount, tokens);
+            addToLedgerAuto(beneficiary, "ETH", weiAmount, tokens);
         } else {
             revert();
         }
@@ -145,14 +155,18 @@ contract HotokenReservation is StandardToken, Ownable {
 
     // Whitelist manipulate function
     function addToWhitelist(address _newAddress) public onlyOwner {
+        if (whitelist[_newAddress] == 0) {
+            whiteListInfo.push(Whitelist(_newAddress, 1));
+        }
         whitelist[_newAddress] = 1;
-        whiteListInfo.push(Whitelist(_newAddress, 1));
     }
 
     function addManyToWhitelist(address[] _newAddresses) public onlyOwner {
         for (uint i = 0; i < _newAddresses.length; i++) {
+            if (whitelist[_newAddresses[i]] == 0) {
+                whiteListInfo.push(Whitelist(_newAddresses[i], 1));
+            }
             whitelist[_newAddresses[i]] = 1;
-            whiteListInfo.push(Whitelist(_newAddresses[i], 1));
         }
     }
 
@@ -189,11 +203,10 @@ contract HotokenReservation is StandardToken, Ownable {
     * @param _amount amount of the currency
     * @param _tokens amount of tokens [need to be in wei amount (with multiply by 10 pow 18)]
     */
-    function addToLedger(address _address, string _currency, uint _amount, uint _tokens) public onlyOwner {
+    function addToLedgerManual(address _address, string _currency, uint _amount, uint _tokens) public onlyOwner {
         // need to check amount in case that currency is not ETH
         // check tokens more than supply or not
-        uint256 tokens = _tokens.mul(10 ** uint(decimals));
-        uint256 exceedSupply = tokenSold.add(tokens);
+        uint256 exceedSupply = tokenSold.add(_tokens);
 
         require(_address != owner);
         require(whitelist[_address] == 1);
@@ -206,20 +219,30 @@ contract HotokenReservation is StandardToken, Ownable {
         uint _usdRate = usdRateMap[_currency];
         uint _discount = getDiscountRate();
 
-        tokenSold = tokenSold.add(tokens);
-        balances[msg.sender] = balances[msg.sender].sub(tokens); 
+        // update sold Amount
+        soldAmount = soldAmount.add(_amount);
 
-        ledgerMap[_address].push(Ledger(_currentTime, _currency, _amount, _usdRate, _discount, tokens));
+        // increase tokenSold
+        tokenSold = tokenSold.add(_tokens);
+
+        // update balance of buyer
+        uint currentBalance = balances[_address];
+        balances[_address] = currentBalance.add(_tokens);
+        balances[msg.sender] = balances[msg.sender].sub(_tokens);
+
+        AddToLedger(_currentTime, _currency, _amount, _usdRate, _discount, _tokens);
+        ledgerMap[_address].push(Ledger(_currentTime, _currency, _amount, _usdRate, _discount, _tokens));
     }
 
-    function addToLedgerAfterSell(address _address, string _currency, uint _amount, uint _tokens) internal {
-        // need to check amount in case that currency is not ETH
+    function addToLedgerAuto(address _address, string _currency, uint _amount, uint _tokens) internal {
         require(_address != owner);
         require(usdRateMap[_currency] > 0);
+
         uint _currentTime = now;
         uint _usdRate = usdRateMap[_currency];
         uint _discount = getDiscountRate();
 
+        AddToLedger(_currentTime, _currency, _amount, _usdRate, _discount, _tokens);
         ledgerMap[_address].push(Ledger(_currentTime, _currency, _amount.div(10 ** uint(decimals)), _usdRate, _discount, _tokens));
     }
 
@@ -240,9 +263,9 @@ contract HotokenReservation is StandardToken, Ownable {
         headers[4] = "discount_rate".toSlice();
         headers[5] = "token_quantity".toSlice();
         ledgerCSV[0] = ",".toSlice().join(headers).toSlice();
-        
+
         for (uint i = 0; i < ledgerMap[_address].length; i++) {
-            var parts = new strings.slice[](6);    
+            var parts = new strings.slice[](6);
             Ledger ledger = ledgerMap[_address][i];
             parts[0] = strings.uintToBytes(ledger.datetime).toSliceB32();
             parts[1] = ledger.currency.toSlice();
@@ -293,6 +316,11 @@ contract HotokenReservation is StandardToken, Ownable {
         return _discountRate.add(10 ** uint(2)).mul(HTKN_PER_USD).mul(usdRate);
     }
 
+    function applyDiscount(uint _amount) public view returns (uint) {
+      uint _discountRate = getDiscountRate();
+      return _discountRate.add(10 ** uint(2)).mul(_amount).div(100);
+    }
+
 
     /**
     * To set current usd rate
@@ -306,6 +334,36 @@ contract HotokenReservation is StandardToken, Ownable {
     function getUSDRate(string _currency) external view returns (uint) {
         require(usdRateMap[_currency] > 0);
         return usdRateMap[_currency];
+    }
+
+    /**
+    * To set conversion rate from supported currencies to $e-18
+    * @param _currency eg. ["ETH", "BTC", "Cent"] (string)
+    * @param _rate conversion rate in cent; how many cent for 1 currency unit (int)
+    */
+    function setConversionRate(string _currency, uint _rate) public onlyOwner {
+        conversionRateMap[_currency] = _rate;
+    }
+
+    function getConversionRate(string _currency) public view returns (uint) {
+        return conversionRateMap[_currency];
+    }
+
+    function toUsd(string _currency, uint _unit) public view returns (uint) {
+      uint rateInCents = getConversionRate(_currency);
+      return _unit.mul(rateInCents).mul(10 ** uint(decimals-2)).div(10 ** uint(decimals));
+    }
+
+    function weiToUsd(uint _wei) public view returns (uint) {
+      return toUsd("ETH", _wei);
+    }
+
+    function btcToUsd(uint _btc) public view returns (uint) {
+      return toUsd("BTC", _btc);
+    }
+
+    function usdToTokens(uint _usd) public view returns (uint) {
+      return _usd.mul(10);
     }
 
     /**
@@ -326,8 +384,7 @@ contract HotokenReservation is StandardToken, Ownable {
     */
     function claimTokens(string _address) public onlyWhenPauseDisabled {
         require(saleFinished);
-        // reach the minimumSold
-        // require(tokenSold >= minimumSold);
+        // TODO: require(tokenSold >= minimumSold);
         require(msg.sender != owner);
         require(whitelist[msg.sender] == 1);
         require(ledgerMap[msg.sender].length > 0);
@@ -342,31 +399,20 @@ contract HotokenReservation is StandardToken, Ownable {
         return bytes(claimTokenMap[msg.sender]).length > 0;
     }
 
-    /**
-    * Get the list of all claimTokens
-    */
-    // function getListOfClaimTokens() public view onlyOwner returns (string) {
-    //     var ledgerCSV = new strings.slice[]();
+    function getClaimAddressFromAddress(address _address) public view onlyOwner returns (string) {
+       return claimTokenMap[_address];
+    }
 
-        // add header for csv
-        // var headers = new strings.slice[](2);
-        // headers[0] = "eth_address".toSlice();
-        // headers[1] = "htkn_address".toSlice();
-        // ledgerCSV[0] = ",".toSlice().join(headers).toSlice();
-        
-        // for (uint i = 0; i < ledgerMap[_address].length; i++) {
-        //     var parts = new strings.slice[](6);    
-        //     Ledger ledger = ledgerMap[_address][i];
-        //     parts[0] = strings.uintToBytes(ledger.datetime).toSliceB32();
-        //     parts[1] = ledger.currency.toSlice();
-        //     parts[2] = strings.uintToBytes(ledger.quantity).toSliceB32();
-        //     parts[3] = strings.uintToBytes(ledger.usdRate).toSliceB32();
-        //     parts[4] = strings.uintToBytes(ledger.discount).toSliceB32();
-        //     parts[5] = strings.uintToBytes(ledger.tokenQuantity).toSliceB32();
-        //     ledgerCSV[i + 1] = ",".toSlice().join(parts).toSlice();
-        // }
-
-    //     return "\n".toSlice().join(ledgerCSV);
+    // function getClaimAddressFromManyAddresses(address[] _addresses) public view onlyOwner returns (bytes[]) {
+    //     bytes32[_addresses.length] bytesArray
+    //     for (uint i = 0 ; i < _addresses.length ; i++) {
+    //         for (uint j = 0 ; j < whiteListInfo.length ; j++) {
+    //             if (whiteListInfo[j].buyer == _addresses[i] && whiteListInfo[j].exists == 1) {
+    //                 out.push(claimTokenMap[_addresses[i]]);
+    //             }
+    //         }
+    //     }
+    //     return out;
     // }
 
     function transfer(address _to, uint256 _value) public onlyOwner validDestination(_to) returns (bool) {
@@ -402,6 +448,37 @@ contract HotokenReservation is StandardToken, Ownable {
     }
 
     /**
+    * This function permits anybody to withdraw the funds they have
+    * contributed if and only if the deadline has passed and the
+    * funding goal was not reached.
+    */
+    function refund() public onlyWhenPauseDisabled {
+        require(saleFinished);
+        // TODO: require(soldAmount < minimumSold);
+        require(msg.sender != owner);
+        require(whitelist[msg.sender] == 1);
+        require(ledgerMap[msg.sender].length > 0);
+
+        uint amount = ethAmount[msg.sender];
+        ethAmount[msg.sender] = 0;
+        if (amount > 0) {
+            msg.sender.transfer(amount);
+            RefundTransfer(msg.sender, amount);
+            refundAmount = refundAmount.add(amount);
+        }
+    }
+
+    /**
+    * withdraw ether from contract for owner
+    */
+    function withDrawOnlyOwner() public onlyOwner {
+        require(saleFinished);
+        uint balanceToSend = this.balance;
+        msg.sender.transfer(balanceToSend);
+        WithdrawOnlyOwner(msg.sender, balanceToSend);
+    }
+
+    /**
     * @dev Burns a specific amount of tokens.
     */
     function burn() public onlyOwner {
@@ -416,6 +493,8 @@ contract HotokenReservation is StandardToken, Ownable {
 
     // Kill the contract
     function kill() public onlyOwner {
+        require(saleFinished);
+        require(this.balance == 0);
         selfdestruct(owner);
     }
 }
