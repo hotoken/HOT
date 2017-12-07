@@ -1,10 +1,19 @@
 const {expect} = require('chai')
-const HotokenReservation = artifacts.require('./HotokenReservation') 
+const HotokenReservation = artifacts.require('./HotokenReservation')
 
+contract('HotokenReservation', function() {
+  describe('claimTokens', function() {
+    it('should not be able to claim tokens when pause the sale', async function() {
+    })
+  })
+})
+
+
+/*
 contract('HotokenReservation claim tokens', function(accounts) {
   let hotoken
   const user1 = accounts[1]
-  
+
   before(async function () {
     hotoken = await HotokenReservation.new();
 
@@ -156,3 +165,4 @@ contract('HotokenReservation claim tokens', function(accounts) {
     expect(exists).to.be.false
   })
 })
+*/

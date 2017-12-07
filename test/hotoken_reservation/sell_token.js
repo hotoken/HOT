@@ -176,9 +176,12 @@ contract('HotokenReservation', function(accounts) {
 
       await h.setPause(false)
 
-      shouldRevert(async () => {
+      try {
         await h.sendTransaction({from: owner, value: 1 * 10 ** 18})
-      })
+        expect.fail(true, false, 'Operation should be reverted')
+      } catch (e) {
+        expect(e.toString()).to.be.include('revert')
+      }
     })
     it('should allow only buyer in whitelist', async function() {
       const h = await HotokenReservation.deployed()

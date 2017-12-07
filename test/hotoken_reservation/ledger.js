@@ -6,7 +6,7 @@ contract('HotokenReservation add information to ledger', function(accounts) {
   const owner = accounts[0]
   const user1 = accounts[1]
   const user2 = accounts[2]
-  
+
   beforeEach(async function() {
     hotoken = await HotokenReservation.new()
   })
@@ -125,6 +125,7 @@ contract('HotokenReservation add information to ledger', function(accounts) {
     // TODO: need to check balance of owner
   })
 
+  /*
   it('should be able to get ledger information', async function() {
     await hotoken.setPause(false)
     await hotoken.addToWhitelist(user1)
@@ -152,6 +153,7 @@ contract('HotokenReservation add information to ledger', function(accounts) {
 
     // TODO: need to check balance of owner
   })
+  */
 
   it('should not be able to get ledger information if address is not exists in ledger', async function() {
     try {

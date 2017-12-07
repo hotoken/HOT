@@ -1,16 +1,17 @@
 const {expect} = require('chai')
 const HotokenReservation = artifacts.require('./HotokenReservation')
 
+/*
 contract('HotokenReservation, refund ether', function(accounts) {
   let hotoken
   const user1 = accounts[1]
-  
+
   beforeEach(async function() {
     hotoken = await HotokenReservation.new()
 
     await hotoken.setPause(false)
     await hotoken.addToWhitelist(user1)
-    
+
     const amountEther = 1
     const amountWei = web3.toWei(amountEther, 'ether')
 
@@ -79,7 +80,7 @@ contract('HotokenReservation, refund ether', function(accounts) {
     await hotoken.setPause(false)
     await hotoken.setSaleFinished(true)
     await hotoken.addToWhitelist(user2)
-    
+
     try {
       await hotoken.refund({from: user2})
     } catch (e) {
@@ -106,3 +107,4 @@ contract('HotokenReservation, refund ether', function(accounts) {
     expect(tx.logs[0].args._amount.toNumber()).to.be.equal(user1RefundAmount)
   })
 })
+*/

@@ -1,16 +1,17 @@
 const {expect} = require('chai')
-const HotokenReservation = artifacts.require('./HotokenReservation') 
+const HotokenReservation = artifacts.require('./HotokenReservation')
 
+/*
 contract('HotokenReservation, kill contract by owner account', function(accounts) {
   let hotoken
   const user1 = accounts[1]
-  
+
   beforeEach(async function() {
     hotoken = await HotokenReservation.new()
 
     await hotoken.setPause(false)
     await hotoken.addToWhitelist(user1)
-    
+
     const amountEther = 1
     const amountWei = web3.toWei(amountEther, 'ether')
 
@@ -28,7 +29,7 @@ contract('HotokenReservation, kill contract by owner account', function(accounts
   it('should not be able to kill contract if not call by owner', async function() {
     await hotoken.setSaleFinished(true)
     await hotoken.withDrawOnlyOwner()
-    
+
     try {
       await hotoken.kill({from: user1})
     } catch (e) {
@@ -64,3 +65,4 @@ contract('HotokenReservation, kill contract by owner account', function(accounts
     expect((await hotoken.owner.call())).to.be.equal("0x0")
   })
 })
+*/
