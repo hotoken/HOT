@@ -1,6 +1,6 @@
 const {expect} = require('chai')
 const HotokenReservation = artifacts.require('./HotokenReservation')
-const shouldRevertAsync = require('../shouldRevertAsync')
+const shouldRevert = require('../shouldRevert')
 
 contract('HotokenReservation', function(accounts) {
   describe('buyTokens', function() {
@@ -176,8 +176,24 @@ contract('HotokenReservation', function(accounts) {
 
       await h.setPause(false)
 
-      shouldRevertAsync(async () => {
+      shouldRevert(async () => {
         await h.sendTransaction({from: owner, value: 1 * 10 ** 18})
+      })
+    })
+    it('should allow only buyer in whitelist', async function() {
+      const h = await HotokenReservation.deployed()
+      const user1 = accounts[1]
+      const user2 = accounts[2]
+
+      await h.setPause(false)
+      await h.addToWhitelist(user1)
+      await h.setConversionRate('ETH', 45000) // 1ETH = $450.00
+
+      // allowed
+      await h.sendTransaction({from: user1, value: 1 * 10 ** 18})
+      // not allowed
+      shouldRevert(async () => {
+        await h.sendTransaction({from: user2, value: 1 * 10 ** 18})
       })
     })
   })
