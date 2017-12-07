@@ -100,5 +100,21 @@ contract('HotokenReservation', function() {
       net = await h.applyDiscount(amount)
       expect(net.toNumber()).to.be.equal(30175 * 10 ** 15) // 30.175 tokens
     })
+
+    it('no discount', async function() {
+      const h = await HotokenReservation.deployed()
+      await h.setDiscountRate(0) // no discount
+      let amount = 5 * 10 ** 18 // 5 tokens
+      let net = await h.applyDiscount(amount)
+      expect(net.toNumber()).to.be.equal(5 * 10 ** 18)
+
+      amount = 848 * 10 ** 15 // 0.848 tokens
+      net = await h.applyDiscount(amount)
+      expect(net.toNumber()).to.be.equal(848 * 10 ** 15)
+
+      amount = 2414 * 10 ** 16 // 24.14 tokens
+      net = await h.applyDiscount(amount)
+      expect(net.toNumber()).to.be.equal(2414 * 10 ** 16)
+    })
   })
 })
