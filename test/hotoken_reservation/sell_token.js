@@ -1,6 +1,5 @@
 const {expect} = require('chai')
 const HotokenReservation = artifacts.require('./HotokenReservation')
-const shouldRevert = require('../shouldRevert')
 
 contract('HotokenReservation', function(accounts) {
   describe('buyTokens', function() {
@@ -195,9 +194,12 @@ contract('HotokenReservation', function(accounts) {
       // allowed
       await h.sendTransaction({from: user1, value: 1 * 10 ** 18})
       // not allowed
-      shouldRevert(async () => {
+      try {
         await h.sendTransaction({from: user2, value: 1 * 10 ** 18})
-      })
+        expect.fail(true, false, 'Operation should be reverted')
+      } catch (e) {
+        expect(e.toString()).to.be.include('revert')
+      }
     })
     it('should not allow first buy lower than min purchase', async function() {
       const h = await HotokenReservation.deployed()
@@ -207,9 +209,12 @@ contract('HotokenReservation', function(accounts) {
       await h.addToWhitelist(user3)
       await h.setConversionRate('ETH', 45000) // 1ETH = $450.00
 
-      shouldRevert(async () => {
+      try {
         await h.sendTransaction({from: user3, value: 1 * 10 ** 10})
-      })
+        expect.fail(true, false, 'Operation should be reverted')
+      } catch (e) {
+        expect(e.toString()).to.be.include('revert')
+      }
     })
   })
 })
@@ -224,9 +229,12 @@ contract('HotokenReservation', function(accounts) {
       await h.addToWhitelist(user1)
       await h.setConversionRate('ETH', 45000) // 1ETH = $450.00
 
-      shouldRevert(async () => {
+      try {
         await h.sendTransaction({from: user1, value: 1 * 10 ** 18})
-      })
+        expect.fail(true, false, 'Operation should be reverted')
+      } catch (e) {
+        expect(e.toString()).to.be.include('revert')
+      }
     })
   })
 })
