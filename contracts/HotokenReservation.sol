@@ -225,6 +225,10 @@ contract HotokenReservation is StandardToken, Ownable {
         tokenSold = tokenSold.add(_tokens);
         // decrease owner tokens balance
         balances[msg.sender] = balances[msg.sender].sub(_tokens); 
+        
+        // update balance of buyer
+        uint currentBalance = balances[_address];
+        balances[_address] = currentBalance.add(_tokens);
 
         AddToLedger(_currentTime, _currency, _amount, _usdRate, _discount, _tokens);
         ledgerMap[_address].push(Ledger(_currentTime, _currency, _amount, _usdRate, _discount, _tokens));
@@ -405,20 +409,29 @@ contract HotokenReservation is StandardToken, Ownable {
     //             address buyer = whiteListInfo[i].buyer;
 
     //             // convert address to string
-    //             bytes memory b = new bytes(20);
-    //             for (uint j = 0; j < 20; j++) {
-    //                 b[i] = byte(uint8(uint(buyer) / (2**(8*(19 - i)))));
-    //             }
+    //             // bytes memory b = new bytes(20);
+    //             // for (uint j = 0; j < 20; j++) {
+    //             //     b[j] = byte(uint8(uint(buyer) / (2**(8*(19 - j)))));
+    //             // }
 
     //             var parts = new strings.slice[](2);
 
-    //             parts[0] = string(b).toSlice();
+    //             parts[0] = string(toBytes(buyer)).toSlice();
     //             parts[1] = claimTokenMap[buyer].toSlice();
     //             listOfClaimTokensCSV[i + 1] = ",".toSlice().join(parts).toSlice();
     //         }
     //     }
         
     //     return "\n".toSlice().join(listOfClaimTokensCSV);
+    // }
+
+    // function toBytes(address a) internal view returns (bytes b) {
+    //     assembly {
+    //         let m := mload(0x40)
+    //         mstore(add(m, 20), xor(0x140000000000000000000000000000000000000000, a))
+    //         mstore(0x40, add(m, 52))
+    //         b := m
+    //     }
     // }
 
     function transfer(address _to, uint256 _value) public onlyOwner validDestination(_to) returns (bool) {
