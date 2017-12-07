@@ -9,7 +9,7 @@ contract('HotokenReservation', function(accounts) {
       expect(min.toNumber()).to.be.equal(300 * 10 ** 18)
     })
   })
-  describe.only('setMinimumPurchase', function() {
+  describe('setMinimumPurchase', function() {
     it('should set the minimum purchase value', async function() {
       const h = await HotokenReservation.deployed()
       let min = 450

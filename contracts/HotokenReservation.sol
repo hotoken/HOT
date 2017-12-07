@@ -113,38 +113,41 @@ contract HotokenReservation is StandardToken, Ownable {
         require(owner != beneficiary);
         require(whitelist[beneficiary] == 1);
 
-        uint256 weiAmount = msg.value;
-        uint256 usdRate = usdRateMap["ETH"];
+        uint256 amount = msg.value; /* wei */
+        uint256 usd = weiToUsd(amount); /* $1e-18 */
+
+        require(usd >= minimumPurchase);
+        /*uint256 usdRate = usdRateMap["ETH"];*/
 
         // calculate token amount to be created problem
-        uint256 usdAmount = weiAmount.mul(usdRate).div(10 ** uint256(decimals));
-        uint256 tokens = weiAmount.mul(calculateRate("ETH")).div(10 ** uint(2));
+        /*uint256 usdAmount = weiAmount.mul(usdRate).div(10 ** uint256(decimals));
+        uint256 tokens = weiAmount.mul(calculateRate("ETH")).div(10 ** uint(2));*/
+
+        uint256 toBuyTokens = applyDiscount(usdToTokens(usd));
+        uint256 updatedSoldTokens = tokenSold.add(toBuyTokens);
+
         bool exists = ledgerMap[msg.sender].length > 0;
 
-        // check tokens more than supply or not
-        uint256 exceedSupply = tokenSold.add(tokens);
-
-
-        if ((minimumPurchase <= usdAmount) || exists) {
-            require(exceedSupply <= INITIAL_SUPPLY);
-            // increase token sold
-            tokenSold = tokenSold.add(tokens);
+        if ((usd >= minimumPurchase) || exists) {
+            require(updatedSoldTokens <= INITIAL_SUPPLY);
+            // Update sold token
+            tokenSold = updatedSoldTokens;
 
             // transfer token to purchaser
             uint currentBalance = balances[beneficiary];
-            balances[beneficiary] = currentBalance.add(tokens);
+            balances[beneficiary] = currentBalance.add(toBuyTokens);
 
             // decrease balance of owner
-            balances[owner] = balances[owner].sub(tokens);
+            balances[owner] = balances[owner].sub(toBuyTokens);
 
             // update sold Amount
-            soldAmount = soldAmount.add(usdAmount);
+            soldAmount = soldAmount.add(usd);
 
             // track ether from beneficiary
-            ethAmount[beneficiary] = ethAmount[beneficiary].add(weiAmount);
+            ethAmount[beneficiary] = ethAmount[beneficiary].add(amount);
 
-            TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
-            addToLedgerAuto(beneficiary, "ETH", weiAmount, tokens);
+            TokenPurchase(msg.sender, beneficiary, amount, toBuyTokens);
+            addToLedgerAuto(beneficiary, "ETH", amount, toBuyTokens);
         } else {
             revert();
         }
