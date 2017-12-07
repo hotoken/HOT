@@ -369,10 +369,10 @@ contract HotokenReservation is StandardToken, Ownable {
 
     /**
     * To set minimum purchase
-    * @param _minimum in usd (int)
+    * @param _minUsd in usd (int)
     */
-    function setMinimumPurchase(uint _minimum) public onlyOwner {
-        minimumPurchase = _minimum;
+    function setMinimumPurchase(uint _minUsd) public onlyOwner {
+        minimumPurchase = _minUsd.mul(10 ** uint(decimals));
     }
 
     function getMinimumPurchase() external view returns (uint) {
