@@ -9,7 +9,7 @@ contract('HotokenReservation buy token', function(accounts) {
   })
 
 
-  it('should be able to retrieve ether for contributor that is in the whitelist', async function() {
+  it.skip('should be able to retrieve ether for contributor that is in the whitelist', async function() {
     const owner = accounts[0]
     const user1 = accounts[1]
 
@@ -79,7 +79,7 @@ contract('HotokenReservation buy token', function(accounts) {
     // need to check balance of owner
   })
 
-  it('should be able to retrieve ether for contributor that already exists in ledger even if amount is less than minimum purchase', async function() {
+  it.skip('should be able to retrieve ether for contributor that already exists in ledger even if amount is less than minimum purchase', async function() {
     const owner = accounts[0]
     const user1 = accounts[1]
 

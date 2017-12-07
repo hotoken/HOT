@@ -8,7 +8,7 @@ contract('HotokenReservation, burn tokens', function(accounts) {
     hotoken = await HotokenReservation.new()
   })
 
-  it('should be able to burn tokens', async function() {
+  it.skip('should be able to burn tokens', async function() {
     // For increase tokenSold
     const user1 = accounts[1]
     
