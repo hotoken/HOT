@@ -210,8 +210,6 @@ contract HotokenReservation is StandardToken, Ownable {
         require(usdRateMap[_currency] > 0);
         require(exceedSupply <= totalSupply);
 
-        uint256 usdRate = usdRateMap[_currency];
-
         uint _currentTime = now;
         uint _usdRate = usdRateMap[_currency];
         uint _discount = getDiscountRate();
@@ -291,11 +289,11 @@ contract HotokenReservation is StandardToken, Ownable {
 
     /**
     * set discount rate via contract owner
-    * @param _rate discount rate [0, 1, 2, 3]
+    * @param _rate_index discount rate [0, 1, 2, 3]
     */
-    function setDiscountRate(uint _rate) public onlyOwner {
-        require(uint(DiscountRate.SIXTY_FIVE) >= _rate);
-        discountRate = DiscountRate(_rate);
+    function setDiscountRate(uint _rate_index) public onlyOwner {
+        require(uint(DiscountRate.SIXTY_FIVE) >= _rate_index);
+        discountRate = DiscountRate(_rate_index);
     }
 
     function getDiscountRate() public view returns (uint) {
