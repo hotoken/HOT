@@ -8,6 +8,6 @@ contract TestHotokenReservationMath
 {
     function testSanity() public
     {
-        Assert.equal(1,1,"One is One.");
+        Assert.equal(uint(1),uint(1),"One is One.");
     }
 }
