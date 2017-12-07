@@ -1,9 +1,20 @@
 const {expect} = require('chai')
 const HotokenReservation = artifacts.require('./HotokenReservation')
 
+contract('HotokenReservation', function(accounts) {
+  describe('setMinimumPurchase', function() {
+    it('should set the default minimum as $300', async function() {
+      const h = await HotokenReservation.deployed()
+      let min = await h.getMinimumPurchase()
+      expect(min.toNumber()).to.be.equal(300 * 10 ** 18)
+    })
+  })
+})
+
+/*
 contract('HotokenReservation set minimum purchase', function(accounts) {
   let hotoken
-  
+
   beforeEach(async function() {
     hotoken = await HotokenReservation.new()
   })
@@ -35,3 +46,4 @@ contract('HotokenReservation set minimum purchase', function(accounts) {
     expect(AfterMinimum).to.be.equal(currentMinimumPurchase)
   })
 })
+*/

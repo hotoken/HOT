@@ -96,7 +96,7 @@ contract HotokenReservation is StandardToken, Ownable {
         usdRateMap["USD"] = 1;
         usdRateMap["BTC"] = 11 * (10 ** uint(3));
 
-        minimumPurchase = 3 * (10 ** uint(2));
+        minimumPurchase = 300 * (10 ** uint(decimals)); // $300
         minimumSold = 2 * (10 ** uint(6));
 
         soldAmount = 0;
@@ -109,6 +109,10 @@ contract HotokenReservation is StandardToken, Ownable {
     }
 
     function buyTokens(address beneficiary) public payable onlyWhenPauseDisabled {
+        require(beneficiary != address(0));
+        require(owner != beneficiary);
+        require(whitelist[beneficiary] == 1);
+
         uint256 weiAmount = msg.value;
         uint256 usdRate = usdRateMap["ETH"];
 
@@ -120,9 +124,6 @@ contract HotokenReservation is StandardToken, Ownable {
         // check tokens more than supply or not
         uint256 exceedSupply = tokenSold.add(tokens);
 
-        require(beneficiary != address(0));
-        require(owner != beneficiary);
-        require(whitelist[beneficiary] == 1);
 
         if ((minimumPurchase <= usdAmount) || exists) {
             require(exceedSupply <= INITIAL_SUPPLY);

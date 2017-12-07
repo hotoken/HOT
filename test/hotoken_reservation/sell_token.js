@@ -1,6 +1,12 @@
 const {expect} = require('chai')
 const HotokenReservation = artifacts.require('./HotokenReservation')
 
+contract('HotokenReservation', function(accounts) {
+  it.skip('should be allocate buyer tokens', async function() {
+    const h = await HotokenReservation.deployed()
+  })
+})
+
 contract('HotokenReservation buy token', function(accounts) {
   let hotoken
 
