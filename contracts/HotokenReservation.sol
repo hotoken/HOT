@@ -75,7 +75,7 @@ contract HotokenReservation is StandardToken, Ownable {
         _;
     }
 
-    modifier onlyWhenPauseDisabled() {
+    modifier onlyWhenNotPaused() {
         require(!pause);
         _;
     }
@@ -104,11 +104,11 @@ contract HotokenReservation is StandardToken, Ownable {
     }
 
     // fallback function can be used to buy tokens
-    function () external payable onlyWhenPauseDisabled {
+    function () external payable onlyWhenNotPaused {
         buyTokens(msg.sender);
     }
 
-    function buyTokens(address beneficiary) public payable onlyWhenPauseDisabled {
+    function buyTokens(address beneficiary) public payable onlyWhenNotPaused {
         require(beneficiary != address(0));
         require(owner != beneficiary);
         require(whitelist[beneficiary] == 1);
@@ -371,7 +371,7 @@ contract HotokenReservation is StandardToken, Ownable {
     * Claim Tokens
     * @param _address address for sending token to
     */
-    function claimTokens(string _address) public onlyWhenPauseDisabled {
+    function claimTokens(string _address) public onlyWhenNotPaused {
         require(saleFinished);
         // TODO: require(tokenSold >= minimumSold);
         require(msg.sender != owner);
@@ -441,7 +441,7 @@ contract HotokenReservation is StandardToken, Ownable {
     * contributed if and only if the deadline has passed and the
     * funding goal was not reached.
     */
-    function refund() public onlyWhenPauseDisabled {
+    function refund() public onlyWhenNotPaused {
         require(saleFinished);
         // TODO: require(soldAmount < minimumSold);
         require(msg.sender != owner);
