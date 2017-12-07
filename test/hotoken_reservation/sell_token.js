@@ -71,6 +71,29 @@ contract('HotokenReservation', function(accounts) {
 
 contract('HotokenReservation', function(accounts) {
   describe.only('buyTokens', function() {
+    it('should update ETH amount of the buyer', async function() {
+      const h = await HotokenReservation.deployed()
+      const owner = accounts[0]
+      const user1 = accounts[1]
+
+      await h.addToWhitelist(user1)
+      await h.setPause(false)
+      await h.setConversionRate('ETH', 45000) // 1ETH = $450.00
+
+      await h.sendTransaction({from: user1, value: 2 * 10 ** 18})
+      let eth = await h.ethAmount.call(user1)
+      expect(eth.toNumber()).to.be.equal(2 * 10 ** 18)
+
+      // second buy
+      await h.sendTransaction({from: user1, value: 5 * 10 ** 16}) // 0.05ETH
+      eth = await h.ethAmount.call(user1)
+      expect(eth.toNumber()).to.be.equal(205 * 10 ** 16)
+    })
+  })
+})
+
+contract('HotokenReservation', function(accounts) {
+  describe('buyTokens', function() {
     it('should update sold tokens', async function() {
       const h = await HotokenReservation.deployed()
       const owner = accounts[0]
@@ -91,7 +114,7 @@ contract('HotokenReservation', function(accounts) {
 })
 
 contract('HotokenReservation', function(accounts) {
-  describe.only('buyTokens', function() {
+  describe('buyTokens', function() {
     it('should update sold tokens when sold multiple times', async function() {
       const h = await HotokenReservation.deployed()
       const user1 = accounts[1]
