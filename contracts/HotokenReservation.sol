@@ -52,6 +52,7 @@ contract HotokenReservation is StandardToken, Ownable {
     mapping(address=>string) public claimTokenMap;
     mapping(string=>uint) usdRateMap;
     mapping(address=>uint256) public ethAmount;
+    mapping(string=>uint) conversionRateMap;
 
     // Events
     /**
@@ -213,7 +214,7 @@ contract HotokenReservation is StandardToken, Ownable {
         require(exceedSupply <= totalSupply);
 
         uint256 usdRate = usdRateMap[_currency];
-        
+
         uint _currentTime = now;
         uint _usdRate = usdRateMap[_currency];
         uint _discount = getDiscountRate();
@@ -223,12 +224,11 @@ contract HotokenReservation is StandardToken, Ownable {
 
         // increase tokenSold
         tokenSold = tokenSold.add(_tokens);
-        // decrease owner tokens balance
-        balances[msg.sender] = balances[msg.sender].sub(_tokens); 
-        
+
         // update balance of buyer
         uint currentBalance = balances[_address];
         balances[_address] = currentBalance.add(_tokens);
+        balances[msg.sender] = balances[msg.sender].sub(_tokens);
 
         AddToLedger(_currentTime, _currency, _amount, _usdRate, _discount, _tokens);
         ledgerMap[_address].push(Ledger(_currentTime, _currency, _amount, _usdRate, _discount, _tokens));
@@ -316,6 +316,11 @@ contract HotokenReservation is StandardToken, Ownable {
         return _discountRate.add(10 ** uint(2)).mul(HTKN_PER_USD).mul(usdRate);
     }
 
+    function applyDiscount(uint _amount) public view returns (uint) {
+      uint _discountRate = getDiscountRate();
+      return _discountRate.add(10 ** uint(2)).mul(_amount).div(100);
+    }
+
 
     /**
     * To set current usd rate
@@ -331,34 +336,35 @@ contract HotokenReservation is StandardToken, Ownable {
         return usdRateMap[_currency];
     }
 
-    mapping(string=>uint) conversionRateMap;
-
     /**
     * To set conversion rate from supported currencies to $e-18
     * @param _currency eg. ["ETH", "BTC", "Cent"] (string)
     * @param _rate conversion rate in cent; how many cent for 1 currency unit (int)
     */
-    // function setConversionRate(string _currency, uint _rate) public onlyOwner {
-    //     conversionRateMap[_currency] = _rate;
-    // }
+    function setConversionRate(string _currency, uint _rate) public onlyOwner {
+        conversionRateMap[_currency] = _rate;
+    }
 
-    // function getConversionRate(string _currency) public view returns (uint) {
-    //     return conversionRateMap[_currency];
-    // }
+    function getConversionRate(string _currency) public view returns (uint) {
+        return conversionRateMap[_currency];
+    }
 
-    // function weiToUsd(uint _wei) public view returns (uint) {
-    //   uint rateInCents = getConversionRate("ETH");
-    //   return _wei.mul(rateInCents).mul(10 ** uint(decimals-2)).div(10 ** uint(decimals));
-    // }
+    function toUsd(string _currency, uint _unit) public view returns (uint) {
+      uint rateInCents = getConversionRate(_currency);
+      return _unit.mul(rateInCents).mul(10 ** uint(decimals-2)).div(10 ** uint(decimals));
+    }
 
-    // function btcToUsd(uint _btc) public view returns (uint) {
-    //   uint rateInCents = getConversionRate("BTC");
-    //   return _btc.mul(rateInCents).mul(10 ** uint(decimals-2)).div(10 ** uint(decimals));
-    // }
+    function weiToUsd(uint _wei) public view returns (uint) {
+      return toUsd("ETH", _wei);
+    }
 
-    // function usdToTokens(uint _usd) public view returns (uint) {
-    //   return _usd.mul(10);
-    // }
+    function btcToUsd(uint _btc) public view returns (uint) {
+      return toUsd("BTC", _btc);
+    }
+
+    function usdToTokens(uint _usd) public view returns (uint) {
+      return _usd.mul(10);
+    }
 
     /**
     * To set minimum purchase
