@@ -11,7 +11,7 @@ contract('HotokenReservation', function(accounts) {
     beforeEach(async function() {
       h = await HotokenReservation.new()
 
-      await h.setConversionRate(45000) // 1ETH = $450.00
+      await h.setConversionToUSDCentsRate(45000) // 1ETH = $450.00
       await h.addToWhitelist(user1)
       await h.addToWhitelist(user2)
     })

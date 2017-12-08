@@ -29,7 +29,7 @@ contract('HotokenReservation', function(accounts) {
       await h.setMinimumSold(0)
 
       // You can buy
-      await h.setConversionRate(45000) // 1ETH = $450.00
+      await h.setConversionToUSDCentsRate(45000) // 1ETH = $450.00
       await h.sendTransaction({from: user1, value: 1 * 10 ** 18})
 
       await h.setSaleFinished(false)
@@ -53,7 +53,7 @@ contract('HotokenReservation', function(accounts) {
       await h.setMinimumSold(2 * (10**6) * (10**18))
 
       // just one ETH sold
-      await h.setConversionRate(50000)
+      await h.setConversionToUSDCentsRate(50000)
       await h.sendTransaction({from: user1, value: 1 * 10 ** 18})
       await h.setSaleFinished(true)
 
@@ -106,7 +106,7 @@ contract('HotokenReservation', function(accounts) {
       await h.setPause(false)
       await h.setDiscountRate(0)
       await h.setMinimumSold(0)
-      await h.setConversionRate(50000)
+      await h.setConversionToUSDCentsRate(50000)
       await h.addToWhitelist(user1)
       await h.sendTransaction({from: user1, value: 1 * 10 ** 18})
       await h.setSaleFinished(true)

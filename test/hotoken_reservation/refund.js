@@ -16,7 +16,7 @@ contract('HotokenReservation', function(accounts) {
     })
 
     it('should not be able to refund if reservation is paused', async function() {
-      await h.setConversionRate(45000) // 1ETH = $450.00
+      await h.setConversionToUSDCentsRate(45000) // 1ETH = $450.00
       
       let amount = web3.toWei(2, 'ether')
 
@@ -34,7 +34,7 @@ contract('HotokenReservation', function(accounts) {
     })
 
     it('should not be able to refund if sale is not finished', async function() {
-      await h.setConversionRate(45000) // 1ETH = $450.00
+      await h.setConversionToUSDCentsRate(45000) // 1ETH = $450.00
       
       let amount = web3.toWei(2, 'ether')
 
@@ -51,7 +51,7 @@ contract('HotokenReservation', function(accounts) {
     })
 
     it('owner should not be able to refund', async function() {
-      await h.setConversionRate(45000) // 1ETH = $450.00
+      await h.setConversionToUSDCentsRate(45000) // 1ETH = $450.00
       
       let amount = web3.toWei(2, 'ether')
 
@@ -70,7 +70,7 @@ contract('HotokenReservation', function(accounts) {
     it('should not be able to refund if sold amount is not reached minimum', async function() {
       await h.setMinimumSold(1 * 10 ** 16)
 
-      await h.setConversionRate(45000) // 1ETH = $450.00
+      await h.setConversionToUSDCentsRate(45000) // 1ETH = $450.00
       
       let amount = web3.toWei(2, 'ether')
 
@@ -105,7 +105,7 @@ contract('HotokenReservation', function(accounts) {
     })
 
     it('should not be able to refund if not exist in the ledger', async function() {
-      await h.setConversionRate(45000) // 1ETH = $450.00
+      await h.setConversionToUSDCentsRate(45000) // 1ETH = $450.00
 
       await h.setSaleFinished(true)
 
@@ -130,7 +130,7 @@ contract('HotokenReservation', function(accounts) {
       await h.addToWhitelist(user1)
       await h.setMinimumSold(1 * 10 ** 6)
 
-      await h.setConversionRate(45000) // 1ETH = $450.00
+      await h.setConversionToUSDCentsRate(45000) // 1ETH = $450.00
       
       let amount = web3.toWei(2, 'ether')
 

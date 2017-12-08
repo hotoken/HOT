@@ -38,7 +38,7 @@ contract HotokenReservation is StandardToken, Ownable {
     uint256 public minimumSold;
     uint256 public soldAmount;
     uint256 public refundAmount;
-    uint256 public ethConversionRate;
+    uint256 public ethConversionToUSDCentsRate;
     Whitelist[] public whiteListInfo; // for iterate claimMap and ledgerMap
 
     // Enum
@@ -50,7 +50,7 @@ contract HotokenReservation is StandardToken, Ownable {
     mapping(address=>Ledger[]) public ledgerMap;
     mapping(address=>string) public claimTokenMap;
     mapping(address=>uint256) public ethAmount;
-    mapping(string=>uint) conversionRateMap;
+
 
     // Events
     /**
@@ -110,7 +110,7 @@ contract HotokenReservation is StandardToken, Ownable {
         uint256 amount = msg.value; /* wei */
         uint256 usd = toUsd(amount); /* $1e-18 */
 
-        uint _usdCentRate = ethConversionRate;
+        uint _usdCentRate = ethConversionToUSDCentsRate;
         uint _discountRateIndex = uint(discountRate);
 
         uint256 toBuyTokens = applyDiscount(usdToTokens(usd));
@@ -269,12 +269,12 @@ contract HotokenReservation is StandardToken, Ownable {
     * To set conversion rate from supported currencies to $e-18
     * @param _rate conversion rate in cent; how many cent for 1 currency unit (int)
     */
-    function setConversionRate(uint _rate) public onlyOwner {
-        ethConversionRate = _rate;
+    function setConversionToUSDCentsRate(uint _rate) public onlyOwner {
+        ethConversionToUSDCentsRate = _rate;
     }
 
     function toUsd(uint _unit) public view returns (uint) {
-      return _unit.mul(ethConversionRate).mul(10 ** uint(decimals-2)).div(10 ** uint(decimals));
+      return _unit.mul(ethConversionToUSDCentsRate).mul(10 ** uint(decimals-2)).div(10 ** uint(decimals));
     }
 
     function usdToTokens(uint _usd) public pure returns (uint) {

@@ -11,7 +11,7 @@ contract('HotokenReservation, withdraw', function(accounts) {
 
     await hotoken.setPause(false)
     await hotoken.addToWhitelist(user1)
-    await hotoken.setConversionRate(50000)
+    await hotoken.setConversionToUSDCentsRate(50000)
 
     const amountEther = 1
     const amountWei = web3.toWei(amountEther, 'ether')

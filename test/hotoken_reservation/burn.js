@@ -9,7 +9,7 @@ contract('HotokenReservation', function(accounts) {
 
       await h.setPause(false)
       await h.addToWhitelist(user1)
-      await h.setConversionRate(50000)
+      await h.setConversionToUSDCentsRate(50000)
       await h.setDiscountRate(0) // no discount
       await h.sendTransaction({from: user1, value: 10 * 10 ** 18})
       await h.setSaleFinished(true)
@@ -40,7 +40,7 @@ contract('HotokenReservation', function(accounts) {
 
       await h.setPause(false)
       await h.addToWhitelist(user1)
-      await h.setConversionRate(50000)
+      await h.setConversionToUSDCentsRate(50000)
       await h.setDiscountRate(0) // no discount
       await h.sendTransaction({from: user1, value: 10 * 10 ** 18})
       await h.setSaleFinished(true)
@@ -64,7 +64,7 @@ contract('HotokenReservation', function(accounts) {
 
       await h.setPause(false)
       await h.addToWhitelist(user1)
-      await h.setConversionRate(50000)
+      await h.setConversionToUSDCentsRate(50000)
       await h.setDiscountRate(0) // no discount
       await h.sendTransaction({from: user1, value: 10 * 10 ** 18})
       await h.setSaleFinished(true)
@@ -87,7 +87,7 @@ contract('HotokenReservation', function(accounts) {
 
       await h.setPause(false)
       await h.addToWhitelist(user1)
-      await h.setConversionRate(50000)
+      await h.setConversionToUSDCentsRate(50000)
       await h.setDiscountRate(0) // no discount
       await h.setSaleFinished(true)
 
@@ -103,7 +103,7 @@ contract('HotokenReservation', function(accounts) {
       const h = await HotokenReservation.deployed()
 
       await h.setPause(false)
-      await h.setConversionRate(50000)
+      await h.setConversionToUSDCentsRate(50000)
       await h.setDiscountRate(0) // no discount
       await h.setSaleFinished(true)
 
