@@ -109,6 +109,9 @@ contract HotokenReservation is StandardToken, Ownable {
         uint256 amount = msg.value; /* wei */
         uint256 usd = toUsd("ETH", amount); /* $1e-18 */
 
+        uint _usdCentRate = conversionRateMap["ETH"];
+        uint _discountRateIndex = uint(discountRate);
+
         uint256 toBuyTokens = applyDiscount(usdToTokens(usd));
         uint256 updatedSoldTokens = tokenSold.add(toBuyTokens);
 
@@ -133,7 +136,7 @@ contract HotokenReservation is StandardToken, Ownable {
             ethAmount[beneficiary] = ethAmount[beneficiary].add(amount);
 
             TokenPurchase(msg.sender, beneficiary, amount, toBuyTokens);
-            addToLedgerAuto(beneficiary, "ETH", amount, toBuyTokens);
+            addToLedgerAuto(beneficiary, "ETH", amount, _usdCentRate, _discountRateIndex, toBuyTokens);
         } else {
             revert();
         }
@@ -189,12 +192,10 @@ contract HotokenReservation is StandardToken, Ownable {
     * @param _amount amount of the currency
     * @param _tokens amount of tokens [need to be in wei amount (with multiply by 10 pow 18)]
     */
-    function addToLedgerManual(address _address, string _currency, uint _amount, uint _tokens) public onlyOwner {
+    function addToLedgerManual(address _address, string _currency, uint _amount, uint _usdCentRate, uint _discountRateIndex, uint _tokens) public onlyOwner {
         // need to check amount in case that currency is not ETH
         // check tokens more than supply or not
         uint _whenRecorded = now;
-        uint _usdCentRate = conversionRateMap[_currency];
-        uint _discountRateIndex = uint(discountRate);
         uint256 updatedSoldTokens = tokenSold.add(_tokens);
 
         require(_address != owner);
@@ -217,10 +218,8 @@ contract HotokenReservation is StandardToken, Ownable {
         ledgerMap[_address].push(Ledger(_whenRecorded, _currency, _amount, _usdCentRate, _discountRateIndex, _tokens));
     }
 
-    function addToLedgerAuto(address _address, string _currency, uint _amount, uint _tokens) internal {
+    function addToLedgerAuto(address _address, string _currency, uint _amount, uint _usdCentRate, uint _discountRateIndex, uint _tokens) internal {
         uint _whenRecorded = now;
-        uint _usdCentRate = conversionRateMap[_currency];
-        uint _discountRateIndex = uint(discountRate);
 
         require(_address != owner);
         require(_usdCentRate > 0);
@@ -239,10 +238,6 @@ contract HotokenReservation is StandardToken, Ownable {
     */
     function setPause(bool _pause) public onlyOwner {
         pause = _pause;
-    }
-
-    function isPause() external view returns (bool) {
-        return pause;
     }
 
     /**
