@@ -6,7 +6,7 @@ const HotokenReservation = artifacts.require('./HotokenReservation')
 /// other state of the contract
 
 contract('HotokenReservation', function(accounts) {
-  describe.only('currency->token', function() {
+  describe('currency->token', function() {
     let h
     before(async function() {
       h = await HotokenReservation.deployed()
