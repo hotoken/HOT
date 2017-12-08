@@ -1,110 +1,154 @@
 const {expect} = require('chai')
 const HotokenReservation = artifacts.require('./HotokenReservation')
 
-/*
-contract('HotokenReservation, refund ether', function(accounts) {
-  let hotoken
-  const user1 = accounts[1]
+contract('HotokenReservation', function(accounts) {
+  describe('refund Ether', function() {
+    let h
+    const owner = accounts[0]
+    const user1 = accounts[1]
 
-  beforeEach(async function() {
-    hotoken = await HotokenReservation.new()
+    beforeEach(async function() {
+      h = await HotokenReservation.new()
 
-    await hotoken.setPause(false)
-    await hotoken.addToWhitelist(user1)
+      await h.setPause(false)
+      await h.addToWhitelist(user1)
+      await h.setMinimumSold(1)
+    })
 
-    const amountEther = 1
-    const amountWei = web3.toWei(amountEther, 'ether')
+    it('should not be able to refund if reservation is paused', async function() {
+      await h.setConversionRate('ETH', 45000) // 1ETH = $450.00
+      
+      let amount = web3.toWei(2, 'ether')
 
-    await hotoken.sendTransaction({from: user1, value: amountWei})
-  })
+      await h.sendTransaction({from: user1, value: amount})
 
-  it('should not be able to transfer refund if pause state is true', async function() {
-    await hotoken.setPause(true)
+      await h.setPause(true)
+      await h.setSaleFinished(true)
 
-    try {
-      await hotoken.refund({from: user1})
-    } catch (e) {
-      expect(e.toString()).to.be.include('revert')
-    }
-  })
+      try {
+        await h.refund({from: user1})
+        expect.fail(true, false, 'Operation should be reverted')
+      } catch (e) {
+        expect(e.toString()).to.be.include('revert')
+      }
+    })
 
-  it('should not be able to transfer refund if sale is not finished', async function() {
-    await hotoken.setPause(false)
-    await hotoken.setSaleFinished(true)
+    it('should not be able to refund if sale is not finished', async function() {
+      await h.setConversionRate('ETH', 45000) // 1ETH = $450.00
+      
+      let amount = web3.toWei(2, 'ether')
 
-    try {
-      await hotoken.refund({from: user1})
-    } catch (e) {
-      expect(e.toString()).to.be.include('revert')
-    }
-  })
+      await h.sendTransaction({from: user1, value: amount})
 
-  it('should not be able to transfer refund for owner', async function() {
-    await hotoken.setPause(false)
-    await hotoken.setSaleFinished(true)
+      await h.setSaleFinished(false)
 
-    try {
-      await hotoken.refund()
-    } catch (e) {
-      expect(e.toString()).to.be.include('revert')
-    }
-  })
+      try {
+        await h.refund({from: user1})
+        expect.fail(true, false, 'Operation should be reverted')
+      } catch (e) {
+        expect(e.toString()).to.be.include('revert')
+      }
+    })
 
-  // TODO
-  it('should not be able to transfer refund if not reach minimumSold', async function() {
-    await hotoken.setPause(false) // need to change after can calculate soldAmount
-    await hotoken.setSaleFinished(true)
+    it('owner should not be able to refund', async function() {
+      await h.setConversionRate('ETH', 45000) // 1ETH = $450.00
+      
+      let amount = web3.toWei(2, 'ether')
 
-    try {
-      await hotoken.refund({from: user1})
-    } catch (e) {
-      expect(e.toString()).to.be.include('revert')
-    }
-  })
+      await h.sendTransaction({from: user1, value: amount})
 
-  it('should not be able to transfer refund if not in the whitelist', async function() {
-    await hotoken.setPause(false)
-    await hotoken.setSaleFinished(true)
-    await hotoken.removeFromWhiteList(user1)
+      await h.setSaleFinished(false)
 
-    try {
-      await hotoken.refund({from: user1})
-    } catch (e) {
-      expect(e.toString()).to.be.include('revert')
-    }
-  })
+      try {
+        await h.refund({from: owner})
+        expect.fail(true, false, 'Operation should be reverted')
+      } catch (e) {
+        expect(e.toString()).to.be.include('revert')
+      }
+    })
 
-  it('should not be able to transfer refund if not exist in the ledger', async function() {
-    const user2 = accounts[2]
+    it('should not be able to refund if sold amount is not reached minimum', async function() {
+      await h.setMinimumSold(1 * 10 ** 16)
 
-    await hotoken.setPause(false)
-    await hotoken.setSaleFinished(true)
-    await hotoken.addToWhitelist(user2)
+      await h.setConversionRate('ETH', 45000) // 1ETH = $450.00
+      
+      let amount = web3.toWei(2, 'ether')
 
-    try {
-      await hotoken.refund({from: user2})
-    } catch (e) {
-      expect(e.toString()).to.be.include('revert')
-    }
-  })
+      await h.sendTransaction({from: user1, value: amount})
 
-  it('should be able to transfer refund', async function() {
-    await hotoken.setPause(false)
-    await hotoken.setSaleFinished(true)
-    await hotoken.addToWhitelist(user1)
+      await h.setSaleFinished(true)
 
-    const user1EtherBefore = (await web3.eth.getBalance(user1)).toNumber()
-    const user1RefundAmount = (await hotoken.ethAmount.call(user1)).toNumber()
-    const tx = await hotoken.refund({from: user1})
-    const user1EtherAfter = (await web3.eth.getBalance(user1)).toNumber()
+      try {
+        await h.refund({from: user1})
+        expect.fail(true, false, 'Operation should be reverted')
+      } catch (e) {
+        expect(e.toString()).to.be.include('revert')
+      }
+    })
 
-    expect(user1EtherAfter).to.be.above(user1EtherBefore)
+    it('should not be able to refund if not in the whitelist', async function() {
+      const h = await HotokenReservation.deployed()
+      const owner = accounts[0]
+      const user1 = accounts[1]
 
-    // test event RefundTransfer
-    expect(tx.logs).to.be.ok
-    expect(tx.logs[0].event).to.be.equal('RefundTransfer')
-    expect(tx.logs[0].args._backer).to.be.equal(user1)
-    expect(tx.logs[0].args._amount.toNumber()).to.be.equal(user1RefundAmount)
+      await h.removeFromWhiteList(user1)
+
+      await h.setMinimumSold(0)
+      await h.setSaleFinished(true)
+
+      try {
+        await h.refund({from: user1})
+        expect.fail(true, false, 'Operation should be reverted')
+      } catch (e) {
+        expect(e.toString()).to.be.include('revert')
+      }
+    })
+
+    it('should not be able to refund if not exist in the ledger', async function() {
+      await h.setConversionRate('ETH', 45000) // 1ETH = $450.00
+
+      await h.setSaleFinished(true)
+
+      try {
+        await h.refund({from: user1})
+        expect.fail(true, false, 'Operation should be reverted')
+      } catch (e) {
+        expect(e.toString()).to.be.include('revert')
+      }
+    })
   })
 })
-*/
+
+contract('HotokenReservation', function(accounts) {
+  describe('refund Ether', function() {
+    it('should be able to refund', async function() {
+      const h = await HotokenReservation.deployed()
+      const owner = accounts[0]
+      const user1 = accounts[1]
+
+      await h.setPause(false)
+      await h.addToWhitelist(user1)
+      await h.setMinimumSold(1 * 10 ** 6)
+
+      await h.setConversionRate('ETH', 45000) // 1ETH = $450.00
+      
+      let amount = web3.toWei(2, 'ether')
+
+      await h.sendTransaction({from: user1, value: amount})
+      await h.setSaleFinished(true)
+
+      const user1BalanceBefore = (await web3.eth.getBalance(user1)).toNumber()
+      const user1RefundAmount = (await h.ethAmount.call(user1)).toNumber()
+      const tx = await h.refund({from: user1})
+      const user1BalanceAfter = (await web3.eth.getBalance(user1)).toNumber()
+
+      expect(user1BalanceAfter).to.be.above(user1BalanceBefore)
+
+      // test event RefundTransfer
+      expect(tx.logs).to.be.ok
+      expect(tx.logs[0].event).to.be.equal('RefundTransfer')
+      expect(tx.logs[0].args._backer).to.be.equal(user1)
+      expect(tx.logs[0].args._amount.toNumber()).to.be.equal(user1RefundAmount)
+    })
+  })
+})

@@ -97,7 +97,7 @@ contract HotokenReservation is StandardToken, Ownable {
         usdRateMap["BTC"] = 11 * (10 ** uint(3));
 
         minimumPurchase = 300 * (10 ** uint(decimals)); // $300
-        minimumSold = 2 * (10 ** uint(6));
+        minimumSold = 2 * (10 ** uint(6)) * (10 ** uint(decimals));
 
         soldAmount = 0;
         refundAmount = 0;
@@ -349,7 +349,7 @@ contract HotokenReservation is StandardToken, Ownable {
       return _unit.mul(rateInCents).mul(10 ** uint(decimals-2)).div(10 ** uint(decimals));
     }
 
-    function usdToTokens(uint _usd) public view returns (uint) {
+    function usdToTokens(uint _usd) public pure returns (uint) {
       return _usd.mul(10);
     }
 
@@ -361,46 +361,18 @@ contract HotokenReservation is StandardToken, Ownable {
         minimumPurchase = _minUsd.mul(10 ** uint(decimals));
     }
 
-    function getMinimumPurchase() external view returns (uint) {
-        return minimumPurchase;
-    }
-
     /**
     * Claim Tokens
     * @param _address address for sending token to
     */
     function claimTokens(string _address) public onlyWhenNotPaused {
         require(saleFinished);
-        // TODO: require(tokenSold >= minimumSold);
+        require(tokenSold >= minimumSold);
         require(msg.sender != owner);
         require(whitelist[msg.sender] == 1);
         require(ledgerMap[msg.sender].length > 0);
         claimTokenMap[msg.sender] = _address;
     }
-
-    function getAddressfromClaimTokens() public view returns (string) {
-        return claimTokenMap[msg.sender];
-    }
-
-    function alreadyClaimTokens() public view returns (bool) {
-        return bytes(claimTokenMap[msg.sender]).length > 0;
-    }
-
-    function getClaimAddressFromAddress(address _address) public view onlyOwner returns (string) {
-       return claimTokenMap[_address];
-    }
-
-    // function getClaimAddressFromManyAddresses(address[] _addresses) public view onlyOwner returns (bytes[]) {
-    //     bytes32[_addresses.length] bytesArray
-    //     for (uint i = 0 ; i < _addresses.length ; i++) {
-    //         for (uint j = 0 ; j < whiteListInfo.length ; j++) {
-    //             if (whiteListInfo[j].buyer == _addresses[i] && whiteListInfo[j].exists == 1) {
-    //                 out.push(claimTokenMap[_addresses[i]]);
-    //             }
-    //         }
-    //     }
-    //     return out;
-    // }
 
     function transfer(address _to, uint256 _value) public onlyOwner validDestination(_to) returns (bool) {
         return super.transfer(_to, _value);
@@ -415,11 +387,7 @@ contract HotokenReservation is StandardToken, Ownable {
     * @param _minimumSold minimumSold
     */
     function setMinimumSold(uint _minimumSold) public onlyOwner {
-        minimumSold = _minimumSold;
-    }
-
-    function getMinimumSold() external view returns (uint) {
-        return minimumSold;
+        minimumSold = _minimumSold.mul(10 ** uint(decimals));
     }
 
     /**
@@ -441,7 +409,7 @@ contract HotokenReservation is StandardToken, Ownable {
     */
     function refund() public onlyWhenNotPaused {
         require(saleFinished);
-        // TODO: require(soldAmount < minimumSold);
+        require(soldAmount < minimumSold);
         require(msg.sender != owner);
         require(whitelist[msg.sender] == 1);
         require(ledgerMap[msg.sender].length > 0);
