@@ -3,16 +3,20 @@ const HotokenReservation = artifacts.require('./HotokenReservation')
 
 contract('HotokenReservation', function(accounts) {
   describe('kill contract', function() {
-    it('should not be able to kill if sale is not finished', async function() {
-      const h = await HotokenReservation.deployed()
-      const owner = accounts[0]
-      const user1 = accounts[1]
+    let h
+    const owner = accounts[0]
+    const user1 = accounts[1]
+
+    beforeEach(async function() {
+      h = await HotokenReservation.new()
 
       await h.addToWhitelist(user1)
       await h.setPause(false)
       await h.setConversionRate('ETH', 45000) // 1ETH = $450.00
       await h.setDiscountRate(1) // 25%
+    })
 
+    it('should not be able to kill if sale is not finished', async function() {
       let amount = web3.toWei(2, 'ether')
       await h.sendTransaction({from: user1, value: amount})
 
@@ -25,21 +29,8 @@ contract('HotokenReservation', function(accounts) {
         expect(e.toString()).to.be.include('revert')
       }
     })
-  })
-})
 
-contract('HotokenReservation', function(accounts) {
-  describe('kill contract', function() {
     it('should not be able to kill contract if not call by owner', async function() {
-      const h = await HotokenReservation.deployed()
-      const owner = accounts[0]
-      const user1 = accounts[1]
-
-      await h.addToWhitelist(user1)
-      await h.setPause(false)
-      await h.setConversionRate('ETH', 45000) // 1ETH = $450.00
-      await h.setDiscountRate(1) // 25%
-
       let amount = web3.toWei(2, 'ether')
       await h.sendTransaction({from: user1, value: amount})
 
@@ -53,21 +44,8 @@ contract('HotokenReservation', function(accounts) {
         expect(e.toString()).to.be.include('revert')
       }
     })
-  })
-})
 
-contract('HotokenReservation', function(accounts) {
-  describe('kill contract', function() {
     it('should not be able to kill contract if owner not withdraw the balances', async function() {
-      const h = await HotokenReservation.deployed()
-      const owner = accounts[0]
-      const user1 = accounts[1]
-
-      await h.addToWhitelist(user1)
-      await h.setPause(false)
-      await h.setConversionRate('ETH', 45000) // 1ETH = $450.00
-      await h.setDiscountRate(1) // 25%
-
       let amount = web3.toWei(2, 'ether')
       await h.sendTransaction({from: user1, value: amount})
 
@@ -80,21 +58,8 @@ contract('HotokenReservation', function(accounts) {
         expect(e.toString()).to.be.include('revert')
       }
     })
-  })
-})
 
-contract('HotokenReservation', function(accounts) {
-  describe('kill contract', function() {
     it('should not be able to kill contract twice', async function() {
-      const h = await HotokenReservation.deployed()
-      const owner = accounts[0]
-      const user1 = accounts[1]
-
-      await h.addToWhitelist(user1)
-      await h.setPause(false)
-      await h.setConversionRate('ETH', 45000) // 1ETH = $450.00
-      await h.setDiscountRate(1) // 25%
-
       let amount = web3.toWei(2, 'ether')
       await h.sendTransaction({from: user1, value: amount})
 

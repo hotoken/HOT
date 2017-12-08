@@ -16,7 +16,7 @@ contract('HotokenReservation, set minimum sold', function(accounts) {
     const newMinimumSold = 50000000
 
     await hotoken.setMinimumSold(newMinimumSold)
-    expect((await hotoken.getMinimumSold()).toNumber()).to.be.equal(newMinimumSold)
+    expect((await hotoken.getMinimumSold()).toNumber()).to.be.equal(newMinimumSold * 10 ** 18)
   })
 
   it('should not be able to set minimum sold if not call by owner', async function() {

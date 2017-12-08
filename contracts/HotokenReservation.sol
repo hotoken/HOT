@@ -391,7 +391,7 @@ contract HotokenReservation is StandardToken, Ownable {
     * @param _minimumSold minimumSold
     */
     function setMinimumSold(uint _minimumSold) public onlyOwner {
-        minimumSold = _minimumSold;
+        minimumSold = _minimumSold.mul(10 ** uint(decimals));
     }
 
     function getMinimumSold() external view returns (uint) {
@@ -417,7 +417,7 @@ contract HotokenReservation is StandardToken, Ownable {
     */
     function refund() public onlyWhenNotPaused {
         require(saleFinished);
-        // TODO: require(soldAmount < minimumSold);
+        require(soldAmount < minimumSold);
         require(msg.sender != owner);
         require(whitelist[msg.sender] == 1);
         require(ledgerMap[msg.sender].length > 0);
