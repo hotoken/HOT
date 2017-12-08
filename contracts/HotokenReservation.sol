@@ -240,10 +240,6 @@ contract HotokenReservation is StandardToken, Ownable {
         pause = _pause;
     }
 
-    function isPause() external view returns (bool) {
-        return pause;
-    }
-
     /**
     * set discount rate via contract owner
     * @param _rate_index discount rate [0, 1, 2, 3]

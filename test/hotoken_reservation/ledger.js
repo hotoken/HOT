@@ -125,7 +125,7 @@ contract('HotokenReservation', function(accounts) {
       const discountRateIndex = 3
 
       try {
-        await h.addToLedgerManual(user1, "BTC", btcAmount, tokens)
+        await h.addToLedgerManual(user1, "BTC", btcAmount, usdCentRate, discountRateIndex, tokens)
         expect.fail(true, false, 'Operation should be reverted')
       } catch (e) {
         expect(e.toString()).to.be.include('revert')
