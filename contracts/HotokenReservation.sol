@@ -48,7 +48,6 @@ contract HotokenReservation is StandardToken, Ownable {
     mapping(address=>uint) public whitelist;
     mapping(address=>Ledger[]) public ledgerMap;
     mapping(address=>string) public claimTokenMap;
-    mapping(string=>uint) usdRateMap;
     mapping(address=>uint256) public ethAmount;
     mapping(string=>uint) conversionRateMap;
 
@@ -89,10 +88,6 @@ contract HotokenReservation is StandardToken, Ownable {
 
         tokenSold = 0;
         discountRate = DiscountRate.SIXTY_FIVE;
-
-        usdRateMap["ETH"] = 4 * (10 ** uint(2));
-        usdRateMap["USD"] = 1;
-        usdRateMap["BTC"] = 11 * (10 ** uint(3));
 
         minimumPurchase = 300 * (10 ** uint(decimals)); // $300
         minimumSold = 2 * (10 ** uint(6)) * (10 ** uint(decimals));
@@ -267,32 +262,12 @@ contract HotokenReservation is StandardToken, Ownable {
         return _discountRate.mul(uint(20)).add(uint(5));
     }
 
-    function calculateRate(string _currency) public view returns (uint) {
-        uint _discountRate = getDiscountRate();
-        uint usdRate = usdRateMap[_currency];
-
-        return _discountRate.add(10 ** uint(2)).mul(HTKN_PER_USD).mul(usdRate);
-    }
 
     function applyDiscount(uint _amount) public view returns (uint) {
       uint _discountRate = getDiscountRate();
       return _discountRate.add(10 ** uint(2)).mul(_amount).div(100);
     }
 
-
-    /**
-    * To set current usd rate
-    * @param _currency eg. ["ETH", "BTC", "USD"] (string)
-    * @param _rate rate for currency to usd (int)
-    */
-    function setUSDRate(string _currency, uint _rate) public onlyOwner {
-        usdRateMap[_currency] = _rate;
-    }
-
-    function getUSDRate(string _currency) external view returns (uint) {
-        require(usdRateMap[_currency] > 0);
-        return usdRateMap[_currency];
-    }
 
     /**
     * To set conversion rate from supported currencies to $e-18
