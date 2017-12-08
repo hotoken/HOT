@@ -349,7 +349,7 @@ contract HotokenReservation is StandardToken, Ownable {
       return _unit.mul(rateInCents).mul(10 ** uint(decimals-2)).div(10 ** uint(decimals));
     }
 
-    function usdToTokens(uint _usd) public view returns (uint) {
+    function usdToTokens(uint _usd) public pure returns (uint) {
       return _usd.mul(10);
     }
 
