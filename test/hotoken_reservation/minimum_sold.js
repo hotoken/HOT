@@ -9,14 +9,14 @@ contract('HotokenReservation, set minimum sold', function(accounts) {
   })
 
   it('should have initial value for minimum sold', async function() {
-    expect((await hotoken.getMinimumSold()).toNumber()).to.be.equal(2000000 * 10 ** 18) // atto$
+    expect((await hotoken.minimumSold.call()).toNumber()).to.be.equal(2000000 * 10 ** 18) // atto$
   })
 
   it('should be able to set minimum sold', async function() {
     const newMinimumSold = 50000000
 
     await hotoken.setMinimumSold(newMinimumSold)
-    expect((await hotoken.getMinimumSold()).toNumber()).to.be.equal(newMinimumSold * 10 ** 18)
+    expect((await hotoken.minimumSold.call()).toNumber()).to.be.equal(50000000 * 10 ** 18)
   })
 
   it('should not be able to set minimum sold if not call by owner', async function() {
@@ -27,6 +27,6 @@ contract('HotokenReservation, set minimum sold', function(accounts) {
     } catch (e) {
       expect(e.toString()).to.be.include('revert')
     }
-    expect((await hotoken.getMinimumSold()).toNumber()).to.be.equal(2000000 * 10 ** 18)
+    expect((await hotoken.minimumSold.call()).toNumber()).to.be.equal(2000000 * 10 ** 18)
   })
 })

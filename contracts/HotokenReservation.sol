@@ -361,10 +361,6 @@ contract HotokenReservation is StandardToken, Ownable {
         minimumPurchase = _minUsd.mul(10 ** uint(decimals));
     }
 
-    function getMinimumPurchase() external view returns (uint) {
-        return minimumPurchase;
-    }
-
     /**
     * Claim Tokens
     * @param _address address for sending token to
@@ -392,10 +388,6 @@ contract HotokenReservation is StandardToken, Ownable {
     */
     function setMinimumSold(uint _minimumSold) public onlyOwner {
         minimumSold = _minimumSold.mul(10 ** uint(decimals));
-    }
-
-    function getMinimumSold() external view returns (uint) {
-        return minimumSold;
     }
 
     /**
