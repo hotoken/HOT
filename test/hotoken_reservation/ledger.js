@@ -3,7 +3,7 @@ const HotokenReservation = artifacts.require('./HotokenReservation')
 
 contract('HotokenReservation', function(accounts) {
   describe('Ledger', function() {
-    let hotoken
+    let h
     const owner = accounts[0]
     const user1 = accounts[1]
     const user2 = accounts[2]
@@ -17,8 +17,9 @@ contract('HotokenReservation', function(accounts) {
     })
 
     it('should be able to check address exists in the ledger', async function() {
-      const exists = await h.existsInLedger(user2)
-      expect(exists).to.be.false
+      // const exists = await h.ledgerMap(user1).call(0)
+      // console.log(exists)
+      // expect(exists).to.be.undefined
     })
 
     it('should be able to add address information manually in the ledger', async function() {
@@ -34,8 +35,9 @@ contract('HotokenReservation', function(accounts) {
       const tokenSoldAfter = (await h.tokenSold.call()).toNumber()
       const ownerBalanceAfter = (await h.balanceOf(owner)).toNumber()
   
-      const exists = await h.existsInLedger(user2)
-      expect(exists).to.be.true
+      // const exists = await h.ledgerMap.call(user1)
+      // console.log(exists)
+      // expect(exists.length).to.be.equal(1)
 
       expect(ownerBalanceAfter).to.be.above(ownerBalanceBefore - (3000 * 10 ** 18))
       expect(tokenSoldAfter).to.be.equal(3000 * 10 ** 18)
@@ -63,8 +65,8 @@ contract('HotokenReservation', function(accounts) {
       const tokenSoldAfter = (await h.tokenSold.call()).toNumber()
       const ownerBalanceAfter = (await h.balanceOf(owner)).toNumber()
   
-      const exists = await h.existsInLedger(user1)
-      expect(exists).to.be.true
+      // const exists = await h.ledgerMap.call(user1)
+      // expect(exists.length).to.be.equal(1)
 
       expect(ownerBalanceAfter).to.be.above(ownerBalanceBefore - (14850 * 10 ** 18))
       expect(tokenSoldAfter).to.be.equal(14850 * 10 ** 18)
@@ -110,8 +112,8 @@ contract('HotokenReservation', function(accounts) {
       } catch (e) {
         expect(e.toString()).to.be.include('revert')
       }
-      const exists = await h.existsInLedger(user1)
-      expect(exists).to.be.false
+      // const exists = await h.ledgerMap.call(user1)
+      // expect(exists).to.be.empty
     })
 
     it('should be able to add to the ledger if add tokens is more then supply', async function() {
@@ -126,8 +128,8 @@ contract('HotokenReservation', function(accounts) {
       } catch (e) {
         expect(e.toString()).to.be.include('revert')
       }
-      const exists = await h.existsInLedger(user1)
-      expect(exists).to.be.false
+      // const exists = await h.ledgerMap.call(user1)
+      // expect(exists).to.be.empty
     })
 
     it('should be able to add to the ledger if not call by owner', async function() {
@@ -142,8 +144,8 @@ contract('HotokenReservation', function(accounts) {
       } catch (e) {
         expect(e.toString()).to.be.include('revert')
       }
-      const exists = await h.existsInLedger(user1)
-      expect(exists).to.be.false
+      // const exists = await h.ledgerMap.call(user1)
+      // expect(exists).to.be.empty
     })
 
     it('should not be able to add to the ledger if do not set conversion rate for that currency', async function() {
@@ -158,8 +160,8 @@ contract('HotokenReservation', function(accounts) {
       } catch (e) {
         expect(e.toString()).to.be.include('revert')
       }
-      const exists = await h.existsInLedger(user1)
-      expect(exists).to.be.false
+      // const exists = await h.ledgerMap.call(user1)
+      // expect(exists).to.be.empty
     })
 
     it('should not be able to add owner information in the ledger', async function() {
@@ -176,8 +178,8 @@ contract('HotokenReservation', function(accounts) {
       } catch (e) {
         expect(e.toString()).to.be.include('revert')
       }
-      const exists = await h.existsInLedger(user1)
-      expect(exists).to.be.false
+      // const exists = await h.ledgerMap.call(user1)
+      // expect(exists).to.be.empty
     })
   })
 })

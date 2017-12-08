@@ -39,7 +39,6 @@ contract HotokenReservation is StandardToken, Ownable {
     uint256 public soldAmount;
     uint256 public refundAmount;
     uint256 public ethConversionToUSDCentsRate;
-    Whitelist[] public whiteListInfo; // for iterate claimMap and ledgerMap
 
     // Enum
     enum DiscountRate {ZERO, TWENTY_FIVE, FOURTY_FIVE, SIXTY_FIVE}
@@ -145,45 +144,23 @@ contract HotokenReservation is StandardToken, Ownable {
 
     // Whitelist manipulate function
     function addToWhitelist(address _newAddress) public onlyOwner {
-        if (whitelist[_newAddress] == 0) {
-            whiteListInfo.push(Whitelist(_newAddress, 1));
-        }
         whitelist[_newAddress] = 1;
     }
 
     function addManyToWhitelist(address[] _newAddresses) public onlyOwner {
         for (uint i = 0; i < _newAddresses.length; i++) {
-            if (whitelist[_newAddresses[i]] == 0) {
-                whiteListInfo.push(Whitelist(_newAddresses[i], 1));
-            }
             whitelist[_newAddresses[i]] = 1;
         }
     }
 
     function removeFromWhiteList(address _address) public onlyOwner {
         whitelist[_address] = 0;
-
-        for(uint i = 0; i < whiteListInfo.length; i++) {
-            if (whiteListInfo[i].buyer == _address) {
-                 whiteListInfo[i].exists = 0;
-            }
-        }
     }
 
     function removeManyFromWhitelist(address[] _addresses) public onlyOwner {
         for (uint i = 0; i < _addresses.length; i++) {
             whitelist[_addresses[i]] = 0;
-
-            for(uint j = 0; j < whiteListInfo.length; j++) {
-                if (whiteListInfo[j].buyer == _addresses[i]) {
-                    whiteListInfo[j].exists = 0;
-                }
-            }
         }
-    }
-
-    function existsInWhitelist(address _address) external view returns (uint) {
-        return whitelist[_address];
     }
 
     /**
@@ -227,10 +204,6 @@ contract HotokenReservation is StandardToken, Ownable {
 
         AddToLedger(_whenRecorded, _currency, _amount, _usdCentRate, _discountRateIndex, _tokens);
         ledgerMap[_address].push(Ledger(_whenRecorded, _currency, _amount.div(10 ** uint(decimals)), _usdCentRate, _discountRateIndex, _tokens));
-    }
-
-    function existsInLedger(address _address) public view returns (bool) {
-        return ledgerMap[_address].length > 0;
     }
 
     /**
