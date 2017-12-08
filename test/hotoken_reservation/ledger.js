@@ -7,7 +7,7 @@ contract('HotokenReservation', function(accounts) {
     const owner = accounts[0]
     const user1 = accounts[1]
     const user2 = accounts[2]
-  
+
     beforeEach(async function() {
       h = await HotokenReservation.new()
 
@@ -24,8 +24,8 @@ contract('HotokenReservation', function(accounts) {
       const tokens = 3000 * 10 ** 18
 
       const tokenSoldBefore = (await h.tokenSold.call()).toNumber()
-      const ownerBalanceBefore = (await h.balanceOf(owner)).toNumber() 
-  
+      const ownerBalanceBefore = (await h.balanceOf(owner)).toNumber()
+
       const tx = await h.addToLedgerManual(user2, 'BTC', btcAmount, usdCentRate, discountRateIndex, tokens)
       const tokenSoldAfter = (await h.tokenSold.call()).toNumber()
       const ownerBalanceAfter = (await h.balanceOf(owner)).toNumber()
@@ -51,8 +51,8 @@ contract('HotokenReservation', function(accounts) {
       const tokens = 3000 * 10 ** 18
 
       const tokenSoldBefore = (await h.tokenSold.call()).toNumber()
-      const ownerBalanceBefore = (await h.balanceOf(owner)).toNumber() 
-  
+      const ownerBalanceBefore = (await h.balanceOf(owner)).toNumber()
+
       await h.addToLedgerManual(user2, 'BTC', btcAmount, usdCentRate, discountRateIndex, tokens)
 
       const ledgerInfo = await h.ledgerMap.call(user2, 0)
@@ -62,14 +62,14 @@ contract('HotokenReservation', function(accounts) {
       expect(ledgerInfo[3].toNumber()).to.be.equal(1100032) // usdCentRate
       expect(ledgerInfo[4].toNumber()).to.be.equal(3) // discountRateIndex
       expect(ledgerInfo[5].toNumber()).to.be.equal(3000 * 10 ** 18) // tokenQuantity
-    }) 
+    })
 
     it('should be able to add address information automatically in the ledger when buy with ETH', async function() {
       let amount = web3.toWei(2, 'ether')
 
       const tokenSoldBefore = (await h.tokenSold.call()).toNumber()
-      const ownerBalanceBefore = (await h.balanceOf(owner)).toNumber() 
-  
+      const ownerBalanceBefore = (await h.balanceOf(owner)).toNumber()
+
       const tx = await h.sendTransaction({from: user1, value: amount})
       const tokenSoldAfter = (await h.tokenSold.call()).toNumber()
       const ownerBalanceAfter = (await h.balanceOf(owner)).toNumber()
@@ -77,7 +77,7 @@ contract('HotokenReservation', function(accounts) {
       const ledgerInfo = await h.ledgerMap.call(user1, 0)
       expect(ledgerInfo).to.be.ok
       expect(ledgerInfo[1]).to.be.equal('ETH') // currency
-      expect(ledgerInfo[2].toNumber()).to.be.equal(2) // amount
+      expect(ledgerInfo[2].toNumber()).to.be.equal(2 * 10 ** 18) // amount
       expect(ledgerInfo[3].toNumber()).to.be.equal(45000) // usdCentRate
       expect(ledgerInfo[4].toNumber()).to.be.equal(3) // discountRateIndex
       expect(ledgerInfo[5].toNumber()).to.be.equal(14850 * 10 ** 18) // tokenQuantity
@@ -91,7 +91,7 @@ contract('HotokenReservation', function(accounts) {
       expect(tx.logs[1].event).to.be.equal('AddToLedger')
       expect(tx.logs[1].args.whenRecorded).to.be.ok
       expect(tx.logs[1].args.currency).to.be.equal('ETH')
-      expect(tx.logs[1].args.amount.toNumber()).to.be.equal(2)
+      expect(tx.logs[1].args.amount.toNumber()).to.be.equal(2 * 10 ** 18)
       expect(tx.logs[1].args.usdCentRate.toNumber()).to.be.equal(45000)
       expect(tx.logs[1].args.discountRateIndex.toNumber()).to.be.equal(3)
       expect(tx.logs[1].args.tokenQuantity.toNumber()).to.be.equal(14850 * 10 ** 18)
@@ -105,7 +105,7 @@ contract('HotokenReservation', function(accounts) {
     const owner = accounts[0]
     const user1 = accounts[1]
     const user2 = accounts[2]
-  
+
     beforeEach(async function() {
       h = await HotokenReservation.new()
 

@@ -202,8 +202,8 @@ contract HotokenReservation is StandardToken, Ownable {
         require(_address != owner);
         require(_usdCentRate > 0);
 
-        AddToLedger(_whenRecorded, _currency, _amount.div(10 ** uint(decimals)), _usdCentRate, _discountRateIndex, _tokens);
-        ledgerMap[_address].push(Ledger(_whenRecorded, _currency, _amount.div(10 ** uint(decimals)), _usdCentRate, _discountRateIndex, _tokens));
+        AddToLedger(_whenRecorded, _currency, _amount, _usdCentRate, _discountRateIndex, _tokens);
+        ledgerMap[_address].push(Ledger(_whenRecorded, _currency, _amount, _usdCentRate, _discountRateIndex, _tokens));
     }
 
     /**
