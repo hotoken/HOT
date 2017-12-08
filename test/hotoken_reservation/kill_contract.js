@@ -1,68 +1,142 @@
 const {expect} = require('chai')
 const HotokenReservation = artifacts.require('./HotokenReservation')
 
-/*
-contract('HotokenReservation, kill contract by owner account', function(accounts) {
-  let hotoken
-  const user1 = accounts[1]
+contract('HotokenReservation', function(accounts) {
+  describe('kill contract', function() {
+    it('should not be able to kill if sale is not finished', async function() {
+      const h = await HotokenReservation.deployed()
+      const owner = accounts[0]
+      const user1 = accounts[1]
 
-  beforeEach(async function() {
-    hotoken = await HotokenReservation.new()
+      await h.addToWhitelist(user1)
+      await h.setPause(false)
+      await h.setConversionRate('ETH', 45000) // 1ETH = $450.00
+      await h.setDiscountRate(1) // 25%
 
-    await hotoken.setPause(false)
-    await hotoken.addToWhitelist(user1)
+      let amount = web3.toWei(2, 'ether')
+      await h.sendTransaction({from: user1, value: amount})
 
-    const amountEther = 1
-    const amountWei = web3.toWei(amountEther, 'ether')
+      await h.setSaleFinished(false)
 
-    await hotoken.sendTransaction({from: user1, value: amountWei})
-  })
-
-  it('should not be able to kill contract if sale is not finished', async function() {
-    try {
-      await hotoken.kill()
-    } catch (e) {
-      expect(e.toString()).to.be.include('revert')
-    }
-  })
-
-  it('should not be able to kill contract if not call by owner', async function() {
-    await hotoken.setSaleFinished(true)
-    await hotoken.withDrawOnlyOwner()
-
-    try {
-      await hotoken.kill({from: user1})
-    } catch (e) {
-      expect(e.toString()).to.be.include('revert')
-    }
-  })
-
-  it('should not be able to kill contract again if killed already', async function() {
-    await hotoken.setSaleFinished(true)
-    await hotoken.withDrawOnlyOwner()
-    await hotoken.kill()
-
-    try {
-      await hotoken.kill()
-    } catch (e) {
-      expect(e.toString()).to.be.include('revert')
-    }
-  })
-
-  it('should not be able to kill contract if eth amount of this smart contract not 0 [not withdraw to another address]', async function() {
-    await hotoken.setSaleFinished(true)
-    try {
-      await hotoken.kill()
-    } catch (e) {
-      expect(e.toString()).to.be.include('revert')
-    }
-  })
-
-  it('should be able to kill contract', async function() {
-    await hotoken.setSaleFinished(true)
-    await hotoken.withDrawOnlyOwner()
-    await hotoken.kill()
-    expect((await hotoken.owner.call())).to.be.equal("0x0")
+      try {
+        await h.kill()
+        expect.fail(true, false, 'Operation should be reverted')
+      } catch (e) {
+        expect(e.toString()).to.be.include('revert')
+      }
+    })
   })
 })
-*/
+
+contract('HotokenReservation', function(accounts) {
+  describe('kill contract', function() {
+    it('should not be able to kill contract if not call by owner', async function() {
+      const h = await HotokenReservation.deployed()
+      const owner = accounts[0]
+      const user1 = accounts[1]
+
+      await h.addToWhitelist(user1)
+      await h.setPause(false)
+      await h.setConversionRate('ETH', 45000) // 1ETH = $450.00
+      await h.setDiscountRate(1) // 25%
+
+      let amount = web3.toWei(2, 'ether')
+      await h.sendTransaction({from: user1, value: amount})
+
+      await h.setSaleFinished(true)
+      await h.withDrawOnlyOwner()
+
+      try {
+        await h.kill({from: user1})
+        expect.fail(true, false, 'Operation should be reverted')
+      } catch (e) {
+        expect(e.toString()).to.be.include('revert')
+      }
+    })
+  })
+})
+
+contract('HotokenReservation', function(accounts) {
+  describe('kill contract', function() {
+    it('should not be able to kill contract if owner not withdraw the balances', async function() {
+      const h = await HotokenReservation.deployed()
+      const owner = accounts[0]
+      const user1 = accounts[1]
+
+      await h.addToWhitelist(user1)
+      await h.setPause(false)
+      await h.setConversionRate('ETH', 45000) // 1ETH = $450.00
+      await h.setDiscountRate(1) // 25%
+
+      let amount = web3.toWei(2, 'ether')
+      await h.sendTransaction({from: user1, value: amount})
+
+      await h.setSaleFinished(true)
+
+      try {
+        await h.kill()
+        expect.fail(true, false, 'Operation should be reverted')
+      } catch (e) {
+        expect(e.toString()).to.be.include('revert')
+      }
+    })
+  })
+})
+
+contract('HotokenReservation', function(accounts) {
+  describe('kill contract', function() {
+    it('should not be able to kill contract twice', async function() {
+      const h = await HotokenReservation.deployed()
+      const owner = accounts[0]
+      const user1 = accounts[1]
+
+      await h.addToWhitelist(user1)
+      await h.setPause(false)
+      await h.setConversionRate('ETH', 45000) // 1ETH = $450.00
+      await h.setDiscountRate(1) // 25%
+
+      let amount = web3.toWei(2, 'ether')
+      await h.sendTransaction({from: user1, value: amount})
+
+      await h.setSaleFinished(true)
+      await h.withDrawOnlyOwner()
+      await h.kill()
+
+      try {
+        await h.kill()
+        expect.fail(true, false, 'Operation should be reverted')
+      } catch (e) {
+        expect(e.toString()).to.be.include('revert')
+      }
+    })
+  })
+})
+
+contract('HotokenReservation', function(accounts) {
+  describe('kill contract', function() {
+    it('should be able to kill contract', async function() {
+      const h = await HotokenReservation.deployed()
+      const owner = accounts[0]
+      const user1 = accounts[1]
+
+      await h.addToWhitelist(user1)
+      await h.setPause(false)
+      await h.setConversionRate('ETH', 45000) // 1ETH = $450.00
+      await h.setDiscountRate(1) // 25%
+
+      let amount = web3.toWei(2, 'ether')
+      await h.sendTransaction({from: user1, value: amount})
+
+      await h.setSaleFinished(true)
+
+      const contractBalanceBefore = (await web3.eth.getBalance(h.address)).toNumber()
+      await h.withDrawOnlyOwner()
+      const contractBalanceAfter = (await web3.eth.getBalance(h.address)).toNumber()
+      await h.kill()
+
+      expect((await h.owner.call())).to.be.equal("0x0")
+      expect(contractBalanceAfter).to.be.below(contractBalanceBefore)
+      expect(contractBalanceAfter).to.be.equal(0)
+    })
+  })
+})
