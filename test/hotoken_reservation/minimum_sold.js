@@ -1,15 +1,15 @@
 const {expect} = require('chai')
-const HotokenReservation = artifacts.require('./HotokenReservation') 
+const HotokenReservation = artifacts.require('./HotokenReservation')
 
 contract('HotokenReservation, set minimum sold', function(accounts) {
   let hotoken
-  
+
   beforeEach(async function() {
     hotoken = await HotokenReservation.new()
   })
 
   it('should have initial value for minimum sold', async function() {
-    expect((await hotoken.getMinimumSold()).toNumber()).to.be.equal(2000000)
+    expect((await hotoken.getMinimumSold()).toNumber()).to.be.equal(2000000 * 10 ** 18) // atto$
   })
 
   it('should be able to set minimum sold', async function() {
@@ -27,6 +27,6 @@ contract('HotokenReservation, set minimum sold', function(accounts) {
     } catch (e) {
       expect(e.toString()).to.be.include('revert')
     }
-    expect((await hotoken.getMinimumSold()).toNumber()).to.be.equal(2000000)
+    expect((await hotoken.getMinimumSold()).toNumber()).to.be.equal(2000000 * 10 ** 18)
   })
 })
