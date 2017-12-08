@@ -18,7 +18,7 @@ contract TestHotokenReservationMath
     {
         HotokenReservation htkn = HotokenReservation(DeployedAddresses.HotokenReservation());
         
-        Assert.equal(htkn.isPause(),true,"Initial contract is paused.");
+        // Assert.equal(htkn.isPause(),true,"Initial contract is paused.");
 
         // htkn.setPause(bool(false));
     }
