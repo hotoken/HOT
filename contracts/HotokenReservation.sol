@@ -38,6 +38,7 @@ contract HotokenReservation is StandardToken, Ownable {
     uint256 public minimumSold;
     uint256 public soldAmount;
     uint256 public refundAmount;
+    uint256 public ethConversionRate;
     Whitelist[] public whiteListInfo; // for iterate claimMap and ledgerMap
 
     // Enum
@@ -107,9 +108,9 @@ contract HotokenReservation is StandardToken, Ownable {
         require(whitelist[beneficiary] == 1);
 
         uint256 amount = msg.value; /* wei */
-        uint256 usd = toUsd("ETH", amount); /* $1e-18 */
+        uint256 usd = toUsd(amount); /* $1e-18 */
 
-        uint _usdCentRate = conversionRateMap["ETH"];
+        uint _usdCentRate = ethConversionRate;
         uint _discountRateIndex = uint(discountRate);
 
         uint256 toBuyTokens = applyDiscount(usdToTokens(usd));
@@ -266,20 +267,14 @@ contract HotokenReservation is StandardToken, Ownable {
 
     /**
     * To set conversion rate from supported currencies to $e-18
-    * @param _currency eg. ["ETH", "BTC", "Cent"] (string)
     * @param _rate conversion rate in cent; how many cent for 1 currency unit (int)
     */
-    function setConversionRate(string _currency, uint _rate) public onlyOwner {
-        conversionRateMap[_currency] = _rate;
+    function setConversionRate(uint _rate) public onlyOwner {
+        ethConversionRate = _rate;
     }
 
-    function getConversionRate(string _currency) public view returns (uint) {
-        return conversionRateMap[_currency];
-    }
-
-    function toUsd(string _currency, uint _unit) public view returns (uint) {
-      uint rateInCents = getConversionRate(_currency);
-      return _unit.mul(rateInCents).mul(10 ** uint(decimals-2)).div(10 ** uint(decimals));
+    function toUsd(uint _unit) public view returns (uint) {
+      return _unit.mul(ethConversionRate).mul(10 ** uint(decimals-2)).div(10 ** uint(decimals));
     }
 
     function usdToTokens(uint _usd) public pure returns (uint) {
@@ -329,10 +324,6 @@ contract HotokenReservation is StandardToken, Ownable {
     */
     function setSaleFinished(bool _saleFinished) public onlyOwner {
         saleFinished = _saleFinished;
-    }
-
-    function getSaleFinished() external view returns (bool) {
-        return saleFinished;
     }
 
     /**

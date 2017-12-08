@@ -12,7 +12,7 @@ contract('HotokenReservation', function(accounts) {
 
       await h.addToWhitelist(user1)
       await h.setPause(false)
-      await h.setConversionRate('ETH', 45000) // 1ETH = $450.00
+      await h.setConversionRate(45000) // 1ETH = $450.00
       await h.setDiscountRate(1) // 25%
     })
 
@@ -86,7 +86,7 @@ contract('HotokenReservation', function(accounts) {
 
       await h.addToWhitelist(user1)
       await h.setPause(false)
-      await h.setConversionRate('ETH', 45000) // 1ETH = $450.00
+      await h.setConversionRate(45000) // 1ETH = $450.00
       await h.setDiscountRate(1) // 25%
 
       let amount = web3.toWei(2, 'ether')
