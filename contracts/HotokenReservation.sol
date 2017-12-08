@@ -304,7 +304,7 @@ contract HotokenReservation is StandardToken, Ownable {
         return _discountRate.mul(uint(20)).add(uint(5));
     }
 
-    function calculateRate(string _currency) internal view returns (uint) {
+    function calculateRate(string _currency) public view returns (uint) {
         uint _discountRate = getDiscountRate();
         uint usdRate = usdRateMap[_currency];
 
