@@ -14,6 +14,7 @@ contract('HotokenReservation', function(accounts) {
       await h.setPause(false)
       await h.setConversionToUSDCentsRate(45000) // 1ETH = $450.00
       await h.setDiscountRate(1) // 25%
+      await h.setMinimumSold(0)
     })
 
     it('should not be able to kill if sale is not finished', async function() {
@@ -88,6 +89,7 @@ contract('HotokenReservation', function(accounts) {
       await h.setPause(false)
       await h.setConversionToUSDCentsRate(45000) // 1ETH = $450.00
       await h.setDiscountRate(1) // 25%
+      await h.setMinimumSold(0)
 
       let amount = web3.toWei(2, 'ether')
       await h.sendTransaction({from: user1, value: amount})

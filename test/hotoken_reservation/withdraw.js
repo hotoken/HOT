@@ -12,6 +12,7 @@ contract('HotokenReservation, withdraw', function(accounts) {
     await hotoken.setPause(false)
     await hotoken.addToWhitelist(user1)
     await hotoken.setConversionToUSDCentsRate(50000)
+    await hotoken.setMinimumSold(0)
 
     const amountEther = 1
     const amountWei = web3.toWei(amountEther, 'ether')
@@ -30,6 +31,18 @@ contract('HotokenReservation, withdraw', function(accounts) {
 
   it('should not be able to withdraw if sale is not finished', async function() {
     await hotoken.setSaleFinished(false)
+
+    try {
+      await hotoken.withDrawOnlyOwner()
+      expect.fail()
+    } catch (e) {
+      expect(e.toString()).to.be.include('revert')
+    }
+  })
+
+  it('should not be able to withdraw if not reach minimum sold amount', async function() {
+    await hotoken.setSaleFinished(false)
+    await hotoken.setMinimumSold(1000000)
 
     try {
       await hotoken.withDrawOnlyOwner()

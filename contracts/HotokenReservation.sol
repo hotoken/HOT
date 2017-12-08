@@ -325,6 +325,7 @@ contract HotokenReservation is StandardToken, Ownable {
     */
     function withDrawOnlyOwner() public onlyOwner {
         require(saleFinished);
+        require(soldAmount >= minimumSold);
         uint balanceToSend = this.balance;
         msg.sender.transfer(balanceToSend);
         WithdrawOnlyOwner(msg.sender, balanceToSend);
