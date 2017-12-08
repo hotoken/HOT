@@ -1,7 +1,6 @@
 const {expect} = require('chai')
 const HotokenReservation = artifacts.require('./HotokenReservation')
 
-/*
 contract('HotokenReservation transfer token', function(accounts) {
   let hotoken
 
@@ -23,6 +22,7 @@ contract('HotokenReservation transfer token', function(accounts) {
 
     try {
       await hotoken.transfer(user2, 1000, {from: user1})
+      expect.fail()
     } catch (e) {
       expect(e.toString()).to.be.include('revert')
     }
@@ -31,6 +31,7 @@ contract('HotokenReservation transfer token', function(accounts) {
   it('should not be able transfer token to 0x address', async function() {
     try {
       await hotoken.transfer("0x0", 1000)
+      expect.fail()
     } catch (e) {
       expect(e.toString()).to.be.include('revert')
     }
@@ -39,20 +40,10 @@ contract('HotokenReservation transfer token', function(accounts) {
   it('should not be able transfer token to owner contract itself', async function() {
     try {
       await hotoken.transfer(accounts[0], 1000)
+      expect.fail()
     } catch (e) {
       expect(e.toString()).to.be.include('revert')
     }
   })
 
-  it('should not be able to transfer token when pause is disabled', async function() {
-    const user1 = accounts[1]
-    await hotoken.setPause(false)
-
-    try {
-      await hotoken.transfer(user1, 1000)
-    } catch (e) {
-      expect(e.toString()).to.be.include('revert')
-    }
-  })
 })
-*/
