@@ -1,7 +1,6 @@
 const {expect} = require('chai')
 const HotokenReservation = artifacts.require('./HotokenReservation')
 
-/*
 contract('HotokenReservation, withdraw', function(accounts) {
   let hotoken
   const owner = accounts[0]
@@ -12,6 +11,7 @@ contract('HotokenReservation, withdraw', function(accounts) {
 
     await hotoken.setPause(false)
     await hotoken.addToWhitelist(user1)
+    await hotoken.setConversionRate('ETH', 50000)
 
     const amountEther = 1
     const amountWei = web3.toWei(amountEther, 'ether')
@@ -22,6 +22,7 @@ contract('HotokenReservation, withdraw', function(accounts) {
   it('should not be able to withdraw if not call by owner', async function() {
     try {
       await hotoken.withDrawOnlyOwner()
+      expect.fail()
     } catch (e) {
       expect(e.toString()).to.be.include('revert')
     }
@@ -32,6 +33,7 @@ contract('HotokenReservation, withdraw', function(accounts) {
 
     try {
       await hotoken.withDrawOnlyOwner()
+      expect.fail()
     } catch (e) {
       expect(e.toString()).to.be.include('revert')
     }
@@ -58,4 +60,3 @@ contract('HotokenReservation, withdraw', function(accounts) {
     expect(tx.logs[0].args._amount.toNumber()).to.be.equal(contractEtherBefore)
   })
 })
-*/
