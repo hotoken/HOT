@@ -267,10 +267,10 @@ contract HotokenReservation is StandardToken, Ownable {
 
     /**
     * To set conversion rate from supported currencies to $e-18
-    * @param _rate conversion rate in cent; how many cent for 1 currency unit (int)
+    * @param _usdCentsPer conversion rate in cent; how many cent for 1 currency unit (int)
     */
-    function setConversionToUSDCentsRate(uint _rate) public onlyOwner {
-        ethConversionToUSDCentsRate = _rate;
+    function setConversionToUSDCentsRate(uint _usdCentsPer) public onlyOwner {
+        ethConversionToUSDCentsRate = _usdCentsPer;
     }
 
     function toUsd(uint _unit) public view returns (uint) {
