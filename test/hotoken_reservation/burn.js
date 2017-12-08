@@ -2,7 +2,7 @@ const {expect} = require('chai')
 const HotokenReservation = artifacts.require('./HotokenReservation')
 
 contract('HotokenReservation', function(accounts) {
-  describe.only('burn', function() {
+  describe('burn', function() {
     it('total supply should equal to token sold', async function() {
       const h = await HotokenReservation.deployed()
       const user1 = accounts[1]
@@ -28,66 +28,92 @@ contract('HotokenReservation', function(accounts) {
   })
 })
 
-/*
-contract('HotokenReservation, burn tokens', function(accounts) {
-  let hotoken
+contract('HotokenReservation', function(accounts) {
+  describe('burn', function() {
+    it('should remove owner balance', async function() {
+      const h = await HotokenReservation.deployed()
+      const owner = accounts[0]
+      const user1 = accounts[1]
 
-  beforeEach(async function() {
-    hotoken = await HotokenReservation.new()
-  })
+      let ownerBalance = await h.balanceOf(owner)
+      expect(ownerBalance.toNumber()).to.be.equal(3000000000 * 10 ** 18)
 
-  it.skip('should be able to burn tokens', async function() {
-    // For increase tokenSold
-    const user1 = accounts[1]
+      await h.setPause(false)
+      await h.addToWhitelist(user1)
+      await h.setConversionRate('ETH', 50000)
+      await h.setDiscountRate(0) // no discount
+      await h.sendTransaction({from: user1, value: 10 * 10 ** 18})
+      await h.setSaleFinished(true)
 
-    await hotoken.setPause(false)
-    await hotoken.addToWhitelist(user1)
+      ownerBalance = await h.balanceOf(owner)
+      expect(ownerBalance.toNumber()).to.be.equal(2999950000 * 10 ** 18)
 
-    const amountEther = 1
-    const amountWei = web3.toWei(amountEther, 'ether')
+      const tx = await h.burn()
 
-    await hotoken.sendTransaction({from: user1, value: amountWei})
-
-    // Finish Sale
-    await hotoken.setSaleFinished(true)
-
-    const totalSupplyBefore = await hotoken.totalSupply.call()
-    const tokenSold = await hotoken.getTokenSold()
-
-    const tx = await hotoken.burn()
-
-    const totalSupplyAfter = await hotoken.totalSupply.call()
-
-    expect(totalSupplyAfter).to.be.equal(3000000000000000000000000000 - 6600000000000000000000)
-    expect((await hotoken.balanceOf.call(accounts[0])).toNumber()).to.be.equal(0)
-
-    // TODO: need to check balance of owner
-
-    // test event Burn
-    expect(tx.logs).to.be.ok
-    expect(tx.logs[0].event).to.be.equal('Burn')
-    expect(tx.logs[0].args.burner).to.be.equal(accounts[0])
-    expect(tx.logs[0].args.value.toNumber()).to.be.equal(totalSupplyBefore.minus(tokenSold).toNumber())
-  })
-
-  it('should not be able to burn tokens if not call by another address', async function() {
-    // Finish Sale
-    await hotoken.setSaleFinished(true)
-    try {
-      await hotoken.burn({from: accounts[1]})
-    } catch (e) {
-      expect(e.toString()).to.be.include('revert')
-    }
-  })
-
-  it('should not be able to burn tokens if sale finish flag is false', async function() {
-    // Finish Sale
-    await hotoken.setSaleFinished(false)
-    try {
-      await hotoken.burn()
-    } catch (e) {
-      expect(e.toString()).to.be.include('revert')
-    }
+      ownerBalance = await h.balanceOf(owner)
+      expect(ownerBalance.toNumber()).to.be.equal(0)
+    })
   })
 })
-*/
+
+contract('HotokenReservation', function(accounts) {
+  describe('burn', function() {
+    it('should fire burn event', async function() {
+      const h = await HotokenReservation.deployed()
+      const user1 = accounts[1]
+
+      await h.setPause(false)
+      await h.addToWhitelist(user1)
+      await h.setConversionRate('ETH', 50000)
+      await h.setDiscountRate(0) // no discount
+      await h.sendTransaction({from: user1, value: 10 * 10 ** 18})
+      await h.setSaleFinished(true)
+
+      const tx = await h.burn()
+
+      expect(tx.logs).to.be.ok
+      expect(tx.logs[0].event).to.be.equal('Burn')
+      expect(tx.logs[0].args.burner).to.be.equal(accounts[0])
+      expect(tx.logs[0].args.value.toNumber()).to.be.equal(2999950000 * 10 ** 18)
+    })
+  })
+})
+
+contract('HotokenReservation', function(accounts) {
+  describe('burn', function() {
+    it('should not be able to burn tokens if not call by another address', async function() {
+      const h = await HotokenReservation.deployed()
+      const user1 = accounts[1]
+
+      await h.setPause(false)
+      await h.addToWhitelist(user1)
+      await h.setConversionRate('ETH', 50000)
+      await h.setDiscountRate(0) // no discount
+      await h.setSaleFinished(true)
+
+      await h.setSaleFinished(true)
+      try {
+        await h.burn({from: user1})
+        expect.fail()
+      } catch (e) {
+        expect(e.toString()).to.be.include('revert')
+      }
+    })
+    it('should not be able to burn tokens if sale finish flag is false', async function() {
+      const h = await HotokenReservation.deployed()
+
+      await h.setPause(false)
+      await h.setConversionRate('ETH', 50000)
+      await h.setDiscountRate(0) // no discount
+      await h.setSaleFinished(true)
+
+      await h.setSaleFinished(false)
+      try {
+        await h.burn()
+        expect.fail()
+      } catch (e) {
+        expect(e.toString()).to.be.include('revert')
+      }
+    })
+  })
+})
