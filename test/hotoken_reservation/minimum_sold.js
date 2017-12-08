@@ -24,6 +24,7 @@ contract('HotokenReservation, set minimum sold', function(accounts) {
 
     try {
       await hotoken.setMinimumSold(newMinimumSold, {from: accounts[1]})
+      expect.fail(true, false, 'Operation should be reverted')
     } catch (e) {
       expect(e.toString()).to.be.include('revert')
     }
