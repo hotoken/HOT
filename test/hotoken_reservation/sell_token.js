@@ -132,7 +132,7 @@ contract('HotokenReservation', function(accounts) {
       let amount = web3.toWei(2, 'ether')
 
       await h.sendTransaction({from: user1, value: amount})
-      let sold = await h.getTokenSold()
+      let sold = await h.tokenSold.call()
 
       expect(sold.toNumber()).to.be.equal(14850 * 10 ** 18)
     })
@@ -152,7 +152,7 @@ contract('HotokenReservation', function(accounts) {
       let amount = web3.toWei(2, 'ether')
 
       await h.sendTransaction({from: user1, value: amount})
-      let sold = await h.getTokenSold()
+      let sold = await h.tokenSold.call()
 
       expect(sold.toNumber()).to.be.equal(14850 * 10 ** 18)
 
@@ -160,7 +160,7 @@ contract('HotokenReservation', function(accounts) {
       await h.addToWhitelist(user1)
 
       await h.sendTransaction({from: user1, value: 1 * 10 ** 18})
-      sold = await h.getTokenSold()
+      sold = await h.tokenSold.call()
 
       expect(sold.toNumber()).to.be.equal(22275 * 10 ** 18)
     })

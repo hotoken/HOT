@@ -1,173 +1,175 @@
 const {expect} = require('chai')
 const HotokenReservation = artifacts.require('./HotokenReservation')
 
-contract('HotokenReservation add information to ledger', function(accounts) {
-  let hotoken
-  const owner = accounts[0]
-  const user1 = accounts[1]
-  const user2 = accounts[2]
+contract('HotokenReservation', function(accounts) {
+  describe('Ledger', function() {
+    let hotoken
+    const owner = accounts[0]
+    const user1 = accounts[1]
+    const user2 = accounts[2]
+  
+    beforeEach(async function() {
+      h = await HotokenReservation.new()
 
-  beforeEach(async function() {
-    hotoken = await HotokenReservation.new()
+      const rate = 1100032;
+      await h.setConversionRate('BTC', rate)
+      await h.setConversionRate('ETH', 45000) // 1ETH = $450.00
+      await h.addToWhitelist(user1)
+      await h.addToWhitelist(user2)
+    })
+
+    it('should be able to check address exists in the ledger', async function() {
+      const exists = await h.existsInLedger(user2)
+      expect(exists).to.be.false
+    })
+
+    it('should be able to add address information manually in the ledger', async function() {
+      const btcAmount = 2025 * 10 ** 16 // 20.25BTC
+      const tokens = 3000 * 10 ** 18
+
+      const tokenSoldBefore = (await h.tokenSold.call()).toNumber()
+      const ownerBalanceBefore = (await h.balanceOf(owner)).toNumber() 
+  
+      const tx = await h.addToLedgerManual(user2, "BTC", btcAmount, tokens)
+      const tokenSoldAfter = (await h.tokenSold.call()).toNumber()
+      const ownerBalanceAfter = (await h.balanceOf(owner)).toNumber()
+  
+      const exists = await h.existsInLedger(user2)
+      expect(exists).to.be.true
+
+      expect(ownerBalanceAfter).to.be.above(ownerBalanceBefore - (3000 * 10 ** 18))
+      expect(tokenSoldAfter).to.be.equal(3000 * 10 ** 18)
+
+      // If success to add in ledger, log will come up
+      expect(tx.logs).to.be.ok
+      expect(tx.logs[0].event).to.be.equal('AddToLedger')
+      expect(tx.logs[0].args.whenRecorded).to.be.ok
+      expect(tx.logs[0].args.currency).to.be.equal("BTC")
+      expect(tx.logs[0].args.amount.toNumber()).to.be.equal(2025 * 10 ** 16)
+      expect(tx.logs[0].args.usdCentRate.toNumber()).to.be.equal(1100032)
+      expect(tx.logs[0].args.discountRateIndex.toNumber()).to.be.equal(3)
+      expect(tx.logs[0].args.tokenQuantity.toNumber()).to.be.equal(3000 * 10 ** 18)
+    })
+
+    it('should be able to add address information automatically in the ledger when buy with ETH', async function() {
+      let amount = web3.toWei(2, 'ether')
+
+      await h.setPause(false)
+
+      const tokenSoldBefore = (await h.tokenSold.call()).toNumber()
+      const ownerBalanceBefore = (await h.balanceOf(owner)).toNumber() 
+  
+      const tx = await h.sendTransaction({from: user1, value: amount})
+      const tokenSoldAfter = (await h.tokenSold.call()).toNumber()
+      const ownerBalanceAfter = (await h.balanceOf(owner)).toNumber()
+  
+      const exists = await h.existsInLedger(user1)
+      expect(exists).to.be.true
+
+      expect(ownerBalanceAfter).to.be.above(ownerBalanceBefore - (14850 * 10 ** 18))
+      expect(tokenSoldAfter).to.be.equal(14850 * 10 ** 18)
+
+      // If success to add in ledger, log will come up
+      expect(tx.logs).to.be.ok
+      expect(tx.logs.length).to.be.equal(2)
+      expect(tx.logs[1].event).to.be.equal('AddToLedger')
+      expect(tx.logs[1].args.whenRecorded).to.be.ok
+      expect(tx.logs[1].args.currency).to.be.equal("ETH")
+      expect(tx.logs[1].args.amount.toNumber()).to.be.equal(2 * 10 ** 18)
+      expect(tx.logs[1].args.usdCentRate.toNumber()).to.be.equal(45000)
+      expect(tx.logs[1].args.discountRateIndex.toNumber()).to.be.equal(3)
+      expect(tx.logs[1].args.tokenQuantity.toNumber()).to.be.equal(14850 * 10 ** 18)
+    })
   })
+})
 
-  it('should be able to check address exists in the ledger', async function() {
-    const exists = await hotoken.existsInLedger(user2)
-    expect(exists).to.be.false
-  })
+contract('HotokenReservation', function(accounts) {
+  describe('Ledger', function() {
+    let hotoken
+    const owner = accounts[0]
+    const user1 = accounts[1]
+    const user2 = accounts[2]
+  
+    beforeEach(async function() {
+      h = await HotokenReservation.new()
 
-  it('should be able to add address information manually in the ledger', async function() {
-    const amount = 4
-    const tokens = 300000
+      const rate = 1100032;
+      await h.setConversionRate('BTC', rate)
+      await h.addToWhitelist(user1)
+    })
 
-    await hotoken.addToWhitelist(user2)
-    const tokenSoldBefore = (await hotoken.getTokenSold()).toNumber()
+    it('should be able to add to the ledger if not in the whitelist', async function() {
+      const btcAmount = 2025 * 10 ** 16 // 20.25BTC
+      const tokens = 3000 * 10 ** 18
 
-    await hotoken.addToLedgerManual(user2, "BTC", amount, tokens)
-    const tokenSoldAfter = (await hotoken.getTokenSold()).toNumber()
+      await h.removeFromWhiteList(user1)
 
-    const exists = await hotoken.existsInLedger(user2)
-    expect(tokenSoldAfter).to.be.equal(300000)
-    expect(exists).to.be.true
+      try {
+        await h.addToLedgerManual(user1, "BTC", btcAmount, tokens)
+        expect.fail(true, false, 'Operation should be reverted')
+      } catch (e) {
+        expect(e.toString()).to.be.include('revert')
+      }
+      const exists = await h.existsInLedger(user1)
+      expect(exists).to.be.false
+    })
 
-    // TODO: need to check balance of owner
-  })
+    it('should be able to add to the ledger if add tokens is more then supply', async function() {
+      const btcAmount = 2025 * 10 ** 16 // 20.25BTC
+      const tokens = 4000000000 * 10 ** 18
 
-  it('should increase tokenSold when add address information in the ledger', async function() {
-    const amount = 5
-    const tokens = 400000
+      try {
+        await h.addToLedgerManual(user1, "BTC", btcAmount, tokens)
+        expect.fail(true, false, 'Operation should be reverted')
+      } catch (e) {
+        expect(e.toString()).to.be.include('revert')
+      }
+      const exists = await h.existsInLedger(user1)
+      expect(exists).to.be.false
+    })
 
-    await hotoken.addToWhitelist(user2)
-    const tokenSoldBefore = (await hotoken.getTokenSold()).toNumber()
-    expect(tokenSoldBefore).to.be.equal(0)
+    it('should be able to add to the ledger if not call by owner', async function() {
+      const btcAmount = 2025 * 10 ** 16 // 20.25BTC
+      const tokens = 4000000000 * 10 ** 18
 
-    await hotoken.addToLedgerManual(user2, "BTC", amount, tokens)
-    const tokenSoldAfter = (await hotoken.getTokenSold()).toNumber()
+      try {
+        await h.addToLedgerManual(user1, "BTC", btcAmount, tokens, {from: user2})
+        expect.fail(true, false, 'Operation should be reverted')
+      } catch (e) {
+        expect(e.toString()).to.be.include('revert')
+      }
+      const exists = await h.existsInLedger(user1)
+      expect(exists).to.be.false
+    })
 
-    const exists = await hotoken.existsInLedger(user2)
-    expect(tokenSoldAfter).to.be.equal(400000)
-    expect(exists).to.be.true
+    it('should not be able to add to the ledger if do not set conversion rate for that currency', async function() {
+      const btcAmount = 2025 * 10 ** 16 // 20.25BTC
+      const tokens = 4000000000 * 10 ** 18
 
-    // TODO: need to check balance of owner
-  })
+      try {
+        await h.addToLedgerManual(user1, "UNKNOW_CURRENCY", btcAmount, tokens)
+        expect.fail(true, false, 'Operation should be reverted')
+      } catch (e) {
+        expect(e.toString()).to.be.include('revert')
+      }
+      const exists = await h.existsInLedger(user1)
+      expect(exists).to.be.false
+    })
 
-  it('should not be able to add address information in the ledger if not in the whitelist', async function() {
-    const amount = 100000
+    it('should not be able to add owner information in the ledger', async function() {
+      const btcAmount = 2025 * 10 ** 16 // 20.25BTC
+      const tokens = 4000000000 * 10 ** 18
 
-    try {
-      await hotoken.addToLedgerManual(user2, "BTC", amount, 20000)
-    } catch (e) {
-      expect(e.toString()).to.be.include('revert')
-    }
-    const exists = await hotoken.existsInLedger(user2)
-    expect(exists).to.be.false
+      await h.addToWhitelist(owner)
 
-    // TODO: need to check balance of owner
-  })
-
-  it('should not be able to add address information in the ledger if tokens is more then supply', async function() {
-    const amount = 100000
-    const tokens = web3.toBigNumber('4000000000000000000000000000000000000000').toNumber()
-
-    await hotoken.addToWhitelist(user1)
-    const tokenSoldBefore = (await hotoken.getTokenSold()).toNumber()
-    expect(tokenSoldBefore).to.be.equal(0)
-
-    try {
-      await hotoken.addToLedgerManual(user1, "BTC", amount, tokens)
-    } catch (e) {
-      expect(e.toString()).to.be.include('revert')
-    }
-
-    const tokenSoldAfter = (await hotoken.getTokenSold()).toNumber()
-    expect(tokenSoldAfter).to.be.equal(tokenSoldBefore)
-
-    // TODO: need to check balance of owner
-  })
-
-  it('should not be able to add address information in the ledger if not call by owner', async function() {
-    const amount = 100000
-
-    await hotoken.addToWhitelist(user2)
-    try {
-      await hotoken.addToLedgerManual(user1, "ETH", amount, 20000, {from: user2})
-    } catch (e) {
-      expect(e.toString()).to.be.include('revert')
-    }
-
-    // TODO: need to check balance of owner
-  })
-
-  it('should not be able to add address information in the ledger that currency is not in usd rate map', async function() {
-    const amount = 100000
-    await hotoken.addToWhitelist(user2)
-
-    try {
-      await hotoken.addToLedgerManual(user1, "LTC", amount, 20000)
-    } catch (e) {
-      expect(e.toString()).to.be.include('revert')
-    }
-
-    // TODO: need to check balance of owner
-  })
-
-  it('should not be able to add owner address information in the ledger', async function() {
-    const amount = 100000
-
-    try {
-      await hotoken.addToLedgerManual(owner, "ETH", amount, 20000)
-    } catch (e) {
-      expect(e.toString()).to.be.include('revert')
-    }
-    const exists = await hotoken.existsInLedger(owner)
-    expect(exists).to.be.false
-
-    // TODO: need to check balance of owner
-  })
-
-  /*
-  it('should be able to get ledger information', async function() {
-    await hotoken.setPause(false)
-    await hotoken.addToWhitelist(user1)
-
-    const amountEther = 1
-    const amountWei = web3.toWei(amountEther, 'ether')
-
-    await hotoken.sendTransaction({from: user1, value: amountWei})
-
-    const tx2 = await hotoken.addToLedgerManual(user1, "BTC", 1, 20000)
-    // test event AddToLedger
-    expect(tx2.logs).to.be.ok
-    expect(tx2.logs[0].event).to.be.equal('AddToLedger')
-    expect(tx2.logs[0].args._currentTime).to.be.ok
-    expect(tx2.logs[0].args._currency).to.be.equal("BTC")
-    expect(tx2.logs[0].args._amount.toNumber()).to.be.equal(1)
-    expect(tx2.logs[0].args._usdRate.toNumber()).to.be.equal(11000)
-    expect(tx2.logs[0].args._discount.toNumber()).to.be.equal(65)
-    expect(tx2.logs[0].args._tokens.toNumber()).to.be.equal(20000)
-
-    const ledgerInformation = await hotoken.getLedgerInformation(user1)
-    expect(ledgerInformation).to.be.include('datetime,currency,currency_quantity,usd_rate,discount_rate,token_quantity')
-    expect(ledgerInformation).to.be.include(',ETH,1,400,65,6600000000000000000000')
-    expect(ledgerInformation).to.be.include(',BTC,1,11000,65,20000')
-
-    // TODO: need to check balance of owner
-  })
-  */
-
-  it('should not be able to get ledger information if address is not exists in ledger', async function() {
-    try {
-      const ledgerInformation = await hotoken.getLedgerInformation(user2)
-    } catch (e) {
-      expect(e.toString()).to.be.include('revert')
-    }
-  })
-
-  it('should not be able to get ledger information if not call by contract owner', async function() {
-    try {
-      const ledgerInformation = await hotoken.getLedgerInformation(user1, {from: user1})
-    } catch (e) {
-      expect(e.toString()).to.be.include('revert')
-    }
+      try {
+        await h.addToLedgerManual(owner, "BTC", btcAmount, tokens)
+        expect.fail(true, false, 'Operation should be reverted')
+      } catch (e) {
+        expect(e.toString()).to.be.include('revert')
+      }
+      const exists = await h.existsInLedger(user1)
+      expect(exists).to.be.false
+    })
   })
 })
