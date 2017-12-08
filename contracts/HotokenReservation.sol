@@ -3,12 +3,10 @@ pragma solidity ^0.4.17;
 import './token/StandardToken.sol';
 import './ownership/Ownable.sol';
 import './math/SafeMath.sol';
-import './utils/strings.sol';
 
 contract HotokenReservation is StandardToken, Ownable {
 
     using SafeMath for uint256;
-    using strings for *;
 
     // Constants
     string public constant name = "ReservedHotoken";
@@ -19,11 +17,11 @@ contract HotokenReservation is StandardToken, Ownable {
 
     // Struct
     struct Ledger {
-        uint datetime;
+        uint whenRecorded;
         string currency;
-        uint quantity;
-        uint usdRate;
-        uint discount;
+        uint amount;
+        uint usdCentRate;
+        uint discountRateIndex;
         uint tokenQuantity;
     }
 
@@ -66,7 +64,7 @@ contract HotokenReservation is StandardToken, Ownable {
     event Burn(address indexed burner, uint256 value);
     event RefundTransfer(address _backer, uint _amount);
     event WithdrawOnlyOwner(address _owner, uint _amount);
-    event AddToLedger(uint _currentTime, string _currency, uint _amount, uint _usdRate, uint _discount, uint _tokens);
+    event AddToLedger(uint whenRecorded, string currency, uint amount, uint usdCentRate, uint discountRateIndex, uint tokenQuantity);
 
     // Modifiers
     modifier validDestination(address _to) {
@@ -146,10 +144,6 @@ contract HotokenReservation is StandardToken, Ownable {
         }
     }
 
-    function getTokenSold() external view returns (uint) {
-        return tokenSold;
-    }
-
     // Whitelist manipulate function
     function addToWhitelist(address _newAddress) public onlyOwner {
         if (whitelist[_newAddress] == 0) {
@@ -203,16 +197,15 @@ contract HotokenReservation is StandardToken, Ownable {
     function addToLedgerManual(address _address, string _currency, uint _amount, uint _tokens) public onlyOwner {
         // need to check amount in case that currency is not ETH
         // check tokens more than supply or not
-        uint256 exceedSupply = tokenSold.add(_tokens);
+        uint _whenRecorded = now;
+        uint _usdCentRate = conversionRateMap[_currency];
+        uint _discountRateIndex = uint(discountRate);
+        uint256 updatedSoldTokens = tokenSold.add(_tokens);
 
         require(_address != owner);
         require(whitelist[_address] == 1);
-        require(usdRateMap[_currency] > 0);
-        require(exceedSupply <= totalSupply);
-
-        uint _currentTime = now;
-        uint _usdRate = usdRateMap[_currency];
-        uint _discount = getDiscountRate();
+        require(_usdCentRate > 0);
+        require(updatedSoldTokens <= INITIAL_SUPPLY);
 
         // update sold Amount
         soldAmount = soldAmount.add(_amount);
@@ -225,55 +218,25 @@ contract HotokenReservation is StandardToken, Ownable {
         balances[_address] = currentBalance.add(_tokens);
         balances[msg.sender] = balances[msg.sender].sub(_tokens);
 
-        AddToLedger(_currentTime, _currency, _amount, _usdRate, _discount, _tokens);
-        ledgerMap[_address].push(Ledger(_currentTime, _currency, _amount, _usdRate, _discount, _tokens));
+        AddToLedger(_whenRecorded, _currency, _amount, _usdCentRate, _discountRateIndex, _tokens);
+        ledgerMap[_address].push(Ledger(_whenRecorded, _currency, _amount, _usdCentRate, _discountRateIndex, _tokens));
     }
 
     function addToLedgerAuto(address _address, string _currency, uint _amount, uint _tokens) internal {
+        uint _whenRecorded = now;
+        uint _usdCentRate = conversionRateMap[_currency];
+        uint _discountRateIndex = uint(discountRate);
+
         require(_address != owner);
-        require(usdRateMap[_currency] > 0);
+        require(_usdCentRate > 0);
 
-        uint _currentTime = now;
-        uint _usdRate = usdRateMap[_currency];
-        uint _discount = getDiscountRate();
-
-        AddToLedger(_currentTime, _currency, _amount, _usdRate, _discount, _tokens);
-        ledgerMap[_address].push(Ledger(_currentTime, _currency, _amount.div(10 ** uint(decimals)), _usdRate, _discount, _tokens));
+        AddToLedger(_whenRecorded, _currency, _amount, _usdCentRate, _discountRateIndex, _tokens);
+        ledgerMap[_address].push(Ledger(_whenRecorded, _currency, _amount.div(10 ** uint(decimals)), _usdCentRate, _discountRateIndex, _tokens));
     }
 
     function existsInLedger(address _address) public view returns (bool) {
         return ledgerMap[_address].length > 0;
     }
-
-    function getLedgerInformation(address _address) public view onlyOwner returns (string) {
-        require(existsInLedger(_address));
-        var ledgerCSV = new strings.slice[](ledgerMap[_address].length + uint(1));
-
-        // add header for csv
-        var headers = new strings.slice[](6);
-        headers[0] = "datetime".toSlice();
-        headers[1] = "currency".toSlice();
-        headers[2] = "currency_quantity".toSlice();
-        headers[3] = "usd_rate".toSlice();
-        headers[4] = "discount_rate".toSlice();
-        headers[5] = "token_quantity".toSlice();
-        ledgerCSV[0] = ",".toSlice().join(headers).toSlice();
-
-        for (uint i = 0; i < ledgerMap[_address].length; i++) {
-            var parts = new strings.slice[](6);
-            Ledger ledger = ledgerMap[_address][i];
-            parts[0] = strings.uintToBytes(ledger.datetime).toSliceB32();
-            parts[1] = ledger.currency.toSlice();
-            parts[2] = strings.uintToBytes(ledger.quantity).toSliceB32();
-            parts[3] = strings.uintToBytes(ledger.usdRate).toSliceB32();
-            parts[4] = strings.uintToBytes(ledger.discount).toSliceB32();
-            parts[5] = strings.uintToBytes(ledger.tokenQuantity).toSliceB32();
-            ledgerCSV[i + 1] = ",".toSlice().join(parts).toSlice();
-        }
-
-        return "\n".toSlice().join(ledgerCSV);
-    }
-
 
     /**
     * set pause state for preventing sale from buyers

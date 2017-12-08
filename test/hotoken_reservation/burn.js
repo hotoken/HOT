@@ -17,7 +17,7 @@ contract('HotokenReservation', function(accounts) {
       const totalSupplyBefore = await h.totalSupply.call()
       expect(totalSupplyBefore.toNumber()).to.be.equal(3000000000 * 10 ** 18)
 
-      const tokenSold = await h.getTokenSold()
+      const tokenSold = await h.tokenSold.call()
       expect(tokenSold.toNumber()).to.be.equal(50000 * 10 ** 18)
 
       const tx = await h.burn()
