@@ -17,7 +17,7 @@ contract('HotokenReservation', function(accounts) {
 
     it('should not be able to refund if reservation is paused', async function() {
       await h.setConversionToUSDCentsRate(45000) // 1ETH = $450.00
-      
+
       let amount = web3.toWei(2, 'ether')
 
       await h.sendTransaction({from: user1, value: amount})
@@ -35,7 +35,7 @@ contract('HotokenReservation', function(accounts) {
 
     it('should not be able to refund if sale is not finished', async function() {
       await h.setConversionToUSDCentsRate(45000) // 1ETH = $450.00
-      
+
       let amount = web3.toWei(2, 'ether')
 
       await h.sendTransaction({from: user1, value: amount})
@@ -52,7 +52,7 @@ contract('HotokenReservation', function(accounts) {
 
     it('owner should not be able to refund', async function() {
       await h.setConversionToUSDCentsRate(45000) // 1ETH = $450.00
-      
+
       let amount = web3.toWei(2, 'ether')
 
       await h.sendTransaction({from: user1, value: amount})
@@ -71,7 +71,7 @@ contract('HotokenReservation', function(accounts) {
       await h.setMinimumSold(1 * 10 ** 16)
 
       await h.setConversionToUSDCentsRate(45000) // 1ETH = $450.00
-      
+
       let amount = web3.toWei(2, 'ether')
 
       await h.sendTransaction({from: user1, value: amount})
@@ -131,7 +131,7 @@ contract('HotokenReservation', function(accounts) {
       await h.setMinimumSold(1 * 10 ** 6)
 
       await h.setConversionToUSDCentsRate(45000) // 1ETH = $450.00
-      
+
       let amount = web3.toWei(2, 'ether')
 
       await h.sendTransaction({from: user1, value: amount})
@@ -149,6 +149,30 @@ contract('HotokenReservation', function(accounts) {
       expect(tx.logs[0].event).to.be.equal('RefundTransfer')
       expect(tx.logs[0].args._backer).to.be.equal(user1)
       expect(tx.logs[0].args._amount.toNumber()).to.be.equal(user1RefundAmount)
+    })
+  })
+})
+
+contract('HotokenReservation', function(accounts) {
+  describe.only('refund', function() {
+    it('should remove refunder balance',async function() {
+      const user1 = accounts[1]
+      const h = await HotokenReservation.deployed()
+      await h.setPause(false)
+      await h.addToWhitelist(user1)
+      await h.setMinimumSold(1 * 10 ** 6)
+      await h.setConversionToUSDCentsRate(45000) // 1ETH = $450.00
+      await h.sendTransaction({from: user1, value: 1 * 10 ** 18})
+      await h.setSaleFinished(true)
+
+      await h.refund({from: user1})
+
+      const balance = await h.balanceOf(user1)
+      expect(balance.toNumber()).to.be.equal(0)
+    })
+
+    it('should remove only balance that comes from ETH directly', function() {
+
     })
   })
 })

@@ -314,6 +314,8 @@ contract HotokenReservation is StandardToken, Ownable {
         uint amount = ethAmount[msg.sender];
         ethAmount[msg.sender] = 0;
         if (amount > 0) {
+            // TODO remove only directed ETH tokens
+            balances[msg.sender] = 0;
             msg.sender.transfer(amount);
             RefundTransfer(msg.sender, amount);
             refundAmount = refundAmount.add(amount);
