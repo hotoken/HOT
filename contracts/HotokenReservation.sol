@@ -289,7 +289,7 @@ contract HotokenReservation is StandardToken, Ownable {
     */
     function claimTokens(string _address) public onlyWhenNotPaused {
         require(saleFinished);
-        require(tokenSold >= minimumSold);
+        require(soldAmount >= minimumSold);
         require(msg.sender != owner);
         require(whitelist[msg.sender] == 1);
         require(ledgerMap[msg.sender].length > 0);

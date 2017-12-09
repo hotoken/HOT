@@ -50,7 +50,7 @@ contract('HotokenReservation', function(accounts) {
       await h.setPause(false)
       await h.addToWhitelist(user1)
       await h.setDiscountRate(0)
-      await h.setMinimumSold(2 * (10**6) * (10**18))
+      await h.setMinimumSold(2 * (10**6))
 
       // just one ETH sold
       await h.setConversionToUSDCentsRate(50000)
