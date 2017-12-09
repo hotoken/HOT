@@ -19,7 +19,8 @@ contract HotokenReservation is StandardToken, Ownable {
     struct Ledger {
         uint whenRecorded;
         string currency;
-        uint amount;
+        uint currencyAmount;
+        uint usdCentAmount;
         uint usdCentRate;
         uint discountRateIndex;
         uint tokenQuantity;
@@ -63,7 +64,7 @@ contract HotokenReservation is StandardToken, Ownable {
     event Burn(address indexed burner, uint256 value);
     event RefundTransfer(address _backer, uint _amount);
     event WithdrawOnlyOwner(address _owner, uint _amount);
-    event AddToLedger(uint whenRecorded, string currency, uint amount, uint usdCentRate, uint discountRateIndex, uint tokenQuantity);
+    event AddToLedger(uint whenRecorded, string currency, uint currencyAmount, uint usdCentAmount, uint usdCentRate, uint discountRateIndex, uint tokenQuantity);
 
     // Modifiers
     modifier validDestination(address _to) {
@@ -136,7 +137,7 @@ contract HotokenReservation is StandardToken, Ownable {
             ethAmount[beneficiary] = ethAmount[beneficiary].add(amount);
 
             TokenPurchase(msg.sender, beneficiary, amount, toBuyTokens);
-            addToLedgerAuto(beneficiary, "ETH", amount, _usdCentRate, _discountRateIndex, toBuyTokens);
+            addToLedgerAuto(beneficiary, "ETH", amount, usd, _usdCentRate, _discountRateIndex, toBuyTokens);
         } else {
             revert();
         }
@@ -163,14 +164,21 @@ contract HotokenReservation is StandardToken, Ownable {
         }
     }
 
+    // TODO update doc comment
     /**
     * add information of buyer to ledger
     * @param _address address of buyer
     * @param _currency currency that buyer spent
-    * @param _amount amount of the currency
+    * @param _currencyAmount amount of the currency (USD in Cent, BTC in one-ten-thousandth BTC. 0.0001)
+    * @param _usdCentAmount amount in Cent
+    * @param _usdCentRate conversion rate of the currency in Cents
+    * @param _discountRateIndex index of discount rate (0=0%, 1=25%, 2=45%, 3=65%)
     * @param _tokens amount of tokens [need to be in wei amount (with multiply by 10 pow 18)]
     */
-    function addToLedgerManual(address _address, string _currency, uint _amount, uint _usdCentRate, uint _discountRateIndex, uint _tokens) public onlyOwner {
+    function addToLedgerManual(
+      address _address, string _currency, uint _currencyAmount,
+      uint _usdCentAmount, uint _usdCentRate, uint _discountRateIndex,
+      uint _tokens) public onlyOwner {
         // need to check amount in case that currency is not ETH
         // check tokens more than supply or not
         uint _whenRecorded = now;
@@ -182,7 +190,7 @@ contract HotokenReservation is StandardToken, Ownable {
         require(updatedSoldTokens <= INITIAL_SUPPLY);
 
         // update sold Amount
-        soldAmount = soldAmount.add(_amount);
+        soldAmount = soldAmount.add(_usdCentAmount);
 
         // increase tokenSold
         tokenSold = tokenSold.add(_tokens);
@@ -192,18 +200,29 @@ contract HotokenReservation is StandardToken, Ownable {
         balances[_address] = currentBalance.add(_tokens);
         balances[msg.sender] = balances[msg.sender].sub(_tokens);
 
-        AddToLedger(_whenRecorded, _currency, _amount, _usdCentRate, _discountRateIndex, _tokens);
-        ledgerMap[_address].push(Ledger(_whenRecorded, _currency, _amount, _usdCentRate, _discountRateIndex, _tokens));
+        AddToLedger(_whenRecorded, _currency, _currencyAmount, _usdCentAmount, _usdCentRate, _discountRateIndex, _tokens);
+        ledgerMap[_address].push(
+            Ledger(
+                _whenRecorded, _currency, _currencyAmount, _usdCentAmount, _usdCentRate, _discountRateIndex, _tokens
+            )
+        );
     }
 
-    function addToLedgerAuto(address _address, string _currency, uint _amount, uint _usdCentRate, uint _discountRateIndex, uint _tokens) internal {
-        uint _whenRecorded = now;
+    function addToLedgerAuto(address _address, string _currency, uint _ethAmount,
+        uint _usdCentAmount, uint _usdCentRate, uint _discountRateIndex,
+        uint _tokens) internal {
 
         require(_address != owner);
         require(_usdCentRate > 0);
 
-        AddToLedger(_whenRecorded, _currency, _amount, _usdCentRate, _discountRateIndex, _tokens);
-        ledgerMap[_address].push(Ledger(_whenRecorded, _currency, _amount, _usdCentRate, _discountRateIndex, _tokens));
+        uint _whenRecorded = now;
+
+        AddToLedger(_whenRecorded, _currency, _ethAmount, _usdCentAmount, _usdCentRate, _discountRateIndex, _tokens);
+        ledgerMap[_address].push(
+            Ledger(
+                _whenRecorded, _currency, _ethAmount, _usdCentAmount, _usdCentRate, _discountRateIndex, _tokens
+            )
+        );
     }
 
     /**
