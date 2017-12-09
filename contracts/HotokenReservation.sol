@@ -50,6 +50,7 @@ contract HotokenReservation is StandardToken, Ownable {
     mapping(address=>Ledger[]) public ledgerMap;
     mapping(address=>string) public claimTokenMap;
     mapping(address=>uint256) public ethAmount;
+    mapping(address=>uint256) public directEthTokens;
 
 
     // Events
@@ -133,8 +134,9 @@ contract HotokenReservation is StandardToken, Ownable {
             // update sold Amount
             soldAmount = soldAmount.add(usd);
 
-            // track ether from beneficiary
+            // track ether and tokens from beneficiary
             ethAmount[beneficiary] = ethAmount[beneficiary].add(amount);
+            directEthTokens[beneficiary] = directEthTokens[beneficiary].add(toBuyTokens);
 
             TokenPurchase(msg.sender, beneficiary, amount, toBuyTokens);
             addToLedgerAuto(beneficiary, "ETH", amount, usd, _usdCentRate, _discountRateIndex, toBuyTokens);
@@ -334,7 +336,9 @@ contract HotokenReservation is StandardToken, Ownable {
         ethAmount[msg.sender] = 0;
         if (amount > 0) {
             // TODO remove only directed ETH tokens
-            balances[msg.sender] = 0;
+            uint toDeductTokens = directEthTokens[msg.sender];
+            balances[msg.sender] = balances[msg.sender].sub(toDeductTokens);
+            directEthTokens[msg.sender] = 0;
             msg.sender.transfer(amount);
             RefundTransfer(msg.sender, amount);
             refundAmount = refundAmount.add(amount);

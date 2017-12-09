@@ -154,7 +154,7 @@ contract('HotokenReservation', function(accounts) {
 })
 
 contract('HotokenReservation', function(accounts) {
-  describe.only('refund', function() {
+  describe('refund', function() {
     it('should remove refunder balance',async function() {
       const user1 = accounts[1]
       const h = await HotokenReservation.deployed()
@@ -170,9 +170,51 @@ contract('HotokenReservation', function(accounts) {
       const balance = await h.balanceOf(user1)
       expect(balance.toNumber()).to.be.equal(0)
     })
+  })
+})
 
-    it('should remove only balance that comes from ETH directly', function() {
+contract('HotokenReservation', function(accounts) {
+  describe('refund', function() {
+    it('should remove only balance that comes from ETH directly', async function() {
+      const user1 = accounts[1]
+      const h = await HotokenReservation.deployed()
+      await h.setPause(false)
+      await h.addToWhitelist(user1)
+      await h.setMinimumSold(1 * 10 ** 6)
+      await h.setConversionToUSDCentsRate(45000) // 1ETH = $450.00
+      await h.sendTransaction({from: user1, value: 1 * 10 ** 18})
+      await h.addToLedgerManual(
+        user1, 'BTC', 2000, 2000*10**18, 1100000, 0, 20000*10**18
+      ) // Buy $2000 using BTC
+      await h.setSaleFinished(true)
 
+      await h.refund({from: user1})
+
+      const balance = await h.balanceOf(user1)
+      expect(balance.toNumber()).to.be.equal(20000*10**18)
+    })
+  })
+})
+
+contract('HotokenReservation', function(accounts) {
+  describe('refund', function() {
+    it('should reset direct-ETH amount of the refunder to zero', async function() {
+      const user1 = accounts[1]
+      const h = await HotokenReservation.deployed()
+      await h.setPause(false)
+      await h.addToWhitelist(user1)
+      await h.setMinimumSold(1 * 10 ** 6)
+      await h.setConversionToUSDCentsRate(45000) // 1ETH = $450.00
+      await h.sendTransaction({from: user1, value: 1 * 10 ** 18})
+      await h.addToLedgerManual(
+        user1, 'BTC', 2000, 2000*10**18, 1100000, 0, 20000*10**18
+      ) // Buy $2000 using BTC
+      await h.setSaleFinished(true)
+
+      await h.refund({from: user1})
+
+      const tokens = await h.directEthTokens.call(user1)
+      expect(tokens.toNumber()).to.be.equal(0)
     })
   })
 })
