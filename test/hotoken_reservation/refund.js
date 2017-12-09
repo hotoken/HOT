@@ -184,7 +184,7 @@ contract('HotokenReservation', function(accounts) {
       await h.setConversionToUSDCentsRate(45000) // 1ETH = $450.00
       await h.sendTransaction({from: user1, value: 1 * 10 ** 18})
       await h.addToLedgerManual(
-        user1, 'BTC', 2000, 2000*10**18, 1100000, 0, 20000*10**18
+        user1, 'BTC', 2000, 200000, 1100000, 0, 20000*10**18
       ) // Buy $2000 using BTC
       await h.setSaleFinished(true)
 
@@ -207,7 +207,7 @@ contract('HotokenReservation', function(accounts) {
       await h.setConversionToUSDCentsRate(45000) // 1ETH = $450.00
       await h.sendTransaction({from: user1, value: 1 * 10 ** 18})
       await h.addToLedgerManual(
-        user1, 'BTC', 2000, 2000*10**18, 1100000, 0, 20000*10**18
+        user1, 'BTC', 2000, 200000, 1100000, 0, 20000*10**18
       ) // Buy $2000 using BTC
       await h.setSaleFinished(true)
 

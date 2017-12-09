@@ -219,7 +219,7 @@ contract('HotokenReservation', function(accounts) {
       const user1 = accounts[1]
       const h = await HotokenReservation.deployed()
       const btcAmount = 2025 * 10 ** 16 // 20.25BTC
-      const usdAmount = 222755 * 10 ** 18
+      const usdAmount = 22275500 // $222755.00
       const usdCentRate = 1100032 // 11000.32$
       const discountRateIndex = 3
       const tokens = 3000 * 10 ** 18
@@ -231,8 +231,8 @@ contract('HotokenReservation', function(accounts) {
       let soldAmount = await h.soldAmount.call()
       expect(soldAmount.toNumber()).to.be.equal(222755 * 10 ** 18)
 
-      // add more $1000
-      let usd = 1000 * 10 ** 18
+      // add more $1000.00
+      let usd = 100000
       await h.addToLedgerManual(
         user1, 'USD', usd, usd, usdCentRate, discountRateIndex, tokens
       )

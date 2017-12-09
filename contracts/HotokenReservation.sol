@@ -192,7 +192,7 @@ contract HotokenReservation is StandardToken, Ownable {
         require(updatedSoldTokens <= INITIAL_SUPPLY);
 
         // update sold Amount
-        soldAmount = soldAmount.add(_usdCentAmount);
+        soldAmount = soldAmount.add(_usdCentAmount.mul(10 ** uint(decimals-2)));
 
         // increase tokenSold
         tokenSold = tokenSold.add(_tokens);
