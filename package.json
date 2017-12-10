@@ -8,7 +8,8 @@
     "migrate": "truffle migrate",
     "test": "truffle test",
     "testrpc": "testrpc",
-    "deploy": "node ./scripts/deploy"
+    "deploy": "node ./scripts/deploy",
+    "gas": "node ./scripts/estimate_gas"
   },
   "repository": {
     "type": "git",
