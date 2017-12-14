@@ -9,7 +9,8 @@
     "test": "truffle test",
     "testrpc": "testrpc",
     "deploy": "node ./scripts/deploy",
-    "gas": "node ./scripts/estimate_gas"
+    "gas": "node ./scripts/estimate_gas",
+    "update-whitelist": "node ./scripts/update_whitelist"
   },
   "repository": {
     "type": "git",
@@ -23,5 +24,10 @@
     "solc": "^0.4.19",
     "truffle": "^4.0.1",
     "web3": "^1.0.0-beta.26"
+  },
+  "dependencies": {
+    "fs-extra": "^5.0.0",
+    "ramda": "^0.25.0",
+    "request-promise-native": "^1.0.5"
   }
 }
