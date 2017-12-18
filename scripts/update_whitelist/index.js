@@ -71,7 +71,7 @@ const userInfoPath = R.path(['user']);
     const ethAddress = ethAddressPath(data)
     const hasEthAddress = !!ethAddress
     if (!hasEthAddress) {
-      console.warn('No ETH address found on ID:', data._id);
+      console.warn('No ETH address found on ID:', data._id, userInfoString(userInfoPath(data)));
       return false
     }
 
