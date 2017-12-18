@@ -92,8 +92,8 @@ contract HotokenReservation is StandardToken, Ownable {
         tokenSold = 0;
         discountRate = DiscountRate.SIXTY_FIVE;
         discountRateToTokenPrice[uint(DiscountRate.SIXTY_FIVE)] = 35 * (10 ** uint(15)); // $0.035
-        discountRateToTokenPrice[uint(DiscountRate.FOURTY_FIVE)] = 55 * (10 ** uint(15)); // $0.035
-        discountRateToTokenPrice[uint(DiscountRate.TWENTY_FIVE)] = 75 * (10 ** uint(15)); // $0.035
+        discountRateToTokenPrice[uint(DiscountRate.FOURTY_FIVE)] = 55 * (10 ** uint(15)); // $0.055
+        discountRateToTokenPrice[uint(DiscountRate.TWENTY_FIVE)] = 75 * (10 ** uint(15)); // $0.075
         discountRateToTokenPrice[uint(DiscountRate.ZERO)] = 1 * (10 ** uint(17)); // $0.1
 
         minimumPurchase = 300 * (10 ** uint(decimals)); // $300
