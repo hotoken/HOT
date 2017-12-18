@@ -52,69 +52,29 @@ contract('HotokenReservation set discount rate', function(accounts) {
 })
 
 contract('HotokenReservation', function() {
-  describe('applyDiscount', function() {
-    it('65% discount', async function() {
+  describe('initial token price', function() {
+    it('65% = $0.035', async function() {
       const h = await HotokenReservation.deployed()
-      await h.setDiscountRate(3) // 65%
-      let amount = 5 * 10 ** 18 // 5 tokens
-      let net = await h.applyDiscount(amount)
-      expect(net.toNumber()).to.be.equal(825 * 10 ** 16) // 8.25 tokens
-
-      amount = 848 * 10 ** 15 // 0.848 tokens
-      net = await h.applyDiscount(amount)
-      expect(net.toNumber()).to.be.equal(13992 * 10 ** 14) // 1.3992 tokens
-
-      amount = 2414 * 10 ** 16 // 24.14 tokens
-      net = await h.applyDiscount(amount)
-      expect(net.toNumber()).to.be.equal(39831 * 10 ** 15) // 39.831 tokens
+      const price = await h.discountRateToTokenPrice.call(3)
+      expect(price.toNumber()).to.be.equal(35 * 10 ** 15)
     })
 
-    it('45% discount', async function() {
+    it('45% = $0.055', async function() {
       const h = await HotokenReservation.deployed()
-      await h.setDiscountRate(2) // 45%
-      let amount = 5 * 10 ** 18 // 5 tokens
-      let net = await h.applyDiscount(amount)
-      expect(net.toNumber()).to.be.equal(725 * 10 ** 16) // 7.25 tokens
-
-      amount = 848 * 10 ** 15 // 0.848 tokens
-      net = await h.applyDiscount(amount)
-      expect(net.toNumber()).to.be.equal(12296 * 10 ** 14) // 1.2296 tokens
-
-      amount = 2414 * 10 ** 16 // 24.14 tokens
-      net = await h.applyDiscount(amount)
-      expect(net.toNumber()).to.be.equal(35003 * 10 ** 15) // 35.003 tokens
+      const price = await h.discountRateToTokenPrice.call(2)
+      expect(price.toNumber()).to.be.equal(55 * 10 ** 15)
     })
 
-    it('25% discount', async function() {
+    it('25% = $0.075', async function() {
       const h = await HotokenReservation.deployed()
-      await h.setDiscountRate(1) // 25%
-      let amount = 5 * 10 ** 18 // 5 tokens
-      let net = await h.applyDiscount(amount)
-      expect(net.toNumber()).to.be.equal(625 * 10 ** 16) // 6.25 tokens
-
-      amount = 848 * 10 ** 15 // 0.848 tokens
-      net = await h.applyDiscount(amount)
-      expect(net.toNumber()).to.be.equal(106 * 10 ** 16) // 1.06 tokens
-
-      amount = 2414 * 10 ** 16 // 24.14 tokens
-      net = await h.applyDiscount(amount)
-      expect(net.toNumber()).to.be.equal(30175 * 10 ** 15) // 30.175 tokens
+      const price = await h.discountRateToTokenPrice.call(1)
+      expect(price.toNumber()).to.be.equal(75 * 10 ** 15)
     })
 
-    it('no discount', async function() {
+    it('0% = $0.1', async function() {
       const h = await HotokenReservation.deployed()
-      await h.setDiscountRate(0) // no discount
-      let amount = 5 * 10 ** 18 // 5 tokens
-      let net = await h.applyDiscount(amount)
-      expect(net.toNumber()).to.be.equal(5 * 10 ** 18)
-
-      amount = 848 * 10 ** 15 // 0.848 tokens
-      net = await h.applyDiscount(amount)
-      expect(net.toNumber()).to.be.equal(848 * 10 ** 15)
-
-      amount = 2414 * 10 ** 16 // 24.14 tokens
-      net = await h.applyDiscount(amount)
-      expect(net.toNumber()).to.be.equal(2414 * 10 ** 16)
+      const price = await h.discountRateToTokenPrice.call(0)
+      expect(price.toNumber()).to.be.equal(1 * 10 ** 17)
     })
   })
 })
