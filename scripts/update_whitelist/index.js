@@ -81,8 +81,10 @@ const userInfoPath = R.path(['user']);
       return false
     }
 
-    console.log(`Found case ID: ${data._id} with ETH address ${ethAddress}`)
     console.log(userInfoString(userInfoPath(data)))
+    console.log(`Case ID: ${data._id}`)
+    console.log(`ETH address ${ethAddress}`)
+    console.log('\n')
     return true
   })
 })()
