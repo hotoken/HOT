@@ -57,34 +57,44 @@ const ethAddressPath = R.path(['escrow', 'answers', 0, 'answer', 0]);
 const userInfoPath = R.path(['user']);
 
 (async function() {
-  const {token} = await login(email, password)
-  const {items: closedCases} = await listClosedCases(config.organizationId, token)
+  // const {token} = await login(email, password)
+  // const {items: closedCases} = await listClosedCases(config.organizationId, token)
 
-  const approvedCases = closedCases
-  .filter(c => c.currentStatus === 2 && !excludedIdIndex[c._id])
+  // const approvedCases = closedCases
+  // .filter(c => c.currentStatus === 2 && !excludedIdIndex[c._id])
 
-  const casesData = await Promise.all(
-    approvedCases.map(c => getCaseData(config.organizationId, c._id, token))
-  )
+  // const casesData = await Promise.all(
+  //   approvedCases.map(c => getCaseData(config.organizationId, c._id, token))
+  // )
 
-  const validCases = casesData.filter(data => {
-    const ethAddress = ethAddressPath(data)
-    const hasEthAddress = !!ethAddress
-    if (!hasEthAddress) {
-      console.warn('No ETH address found on ID:', data._id, userInfoString(userInfoPath(data)));
-      return false
-    }
+  // const validCases = casesData.filter(data => {
+  //   const ethAddress = ethAddressPath(data)
+  //   const hasEthAddress = !!ethAddress
+  //   if (!hasEthAddress) {
+  //     console.warn('No ETH address found on ID:', data._id, userInfoString(userInfoPath(data)));
+  //     return false
+  //   }
 
-    const isEthAddressValid = Web3.utils.isAddress(ethAddress)
-    if (!isEthAddressValid) {
-      console.warn(`Given invalid ETH address (${ethAddress}) on ID: ${data._id}`);
-      return false
-    }
+  //   const isEthAddressValid = Web3.utils.isAddress(ethAddress)
+  //   if (!isEthAddressValid) {
+  //     console.warn(`Given invalid ETH address (${ethAddress}) on ID: ${data._id}`);
+  //     return false
+  //   }
 
-    console.log(userInfoString(userInfoPath(data)))
-    console.log(`Case ID: ${data._id}`)
-    console.log(`ETH address ${ethAddress}`)
-    console.log('\n')
-    return true
-  })
+  //   console.log(userInfoString(userInfoPath(data)))
+  //   console.log(`Case ID: ${data._id}`)
+  //   console.log(`ETH address ${ethAddress}`)
+  //   console.log('\n')
+  //   return true
+  // })
+
+  // check with live contract
+  const provider = new Web3.providers.HttpProvider("http://localhost:8545")
+  const contract = require("truffle-contract")
+  const compiledReservationContract = require('../../build/contracts/HotokenReservation.json')
+  const ReservationContract = contract(compiledReservationContract)
+  ReservationContract.setProvider(provider)
+
+  const RS = await ReservationContract.at('0x882a78892Ddd427cF55FFD20C3496047fC63B24D')
+
 })()
