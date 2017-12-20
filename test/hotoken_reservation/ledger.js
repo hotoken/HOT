@@ -85,10 +85,10 @@ contract('HotokenReservation', function(accounts) {
       expect(ledgerInfo[3].toNumber()).to.be.equal(900 * 10 ** 18) // usdCentAmount
       expect(ledgerInfo[4].toNumber()).to.be.equal(45000) // usdCentRate
       expect(ledgerInfo[5].toNumber()).to.be.equal(3) // discountRateIndex
-      expect(ledgerInfo[6].toNumber()).to.be.equal(14850 * 10 ** 18) // tokenQuantity
+      expect(ledgerInfo[6].toNumber()).to.be.closeTo(257142857142857142857 * 10 ** 2, 10**3) // tokenQuantity
 
-      expect(ownerBalanceAfter).to.be.above(ownerBalanceBefore - (14850 * 10 ** 18))
-      expect(tokenSoldAfter).to.be.equal(14850 * 10 ** 18)
+      expect(ownerBalanceAfter).to.be.closeTo(ownerBalanceBefore - (257142857142857142857 * 10 ** 2), 10**3)
+      expect(tokenSoldAfter).to.be.closeTo(257142857142857142857 * 10 ** 2, 10**3)
 
       // If success to add in ledger, log will come up
       expect(tx.logs).to.be.ok
@@ -100,7 +100,7 @@ contract('HotokenReservation', function(accounts) {
       expect(tx.logs[1].args.usdCentAmount.toNumber()).to.be.equal(900 * 10 ** 18)
       expect(tx.logs[1].args.usdCentRate.toNumber()).to.be.equal(45000)
       expect(tx.logs[1].args.discountRateIndex.toNumber()).to.be.equal(3)
-      expect(tx.logs[1].args.tokenQuantity.toNumber()).to.be.equal(14850 * 10 ** 18)
+      expect(tx.logs[1].args.tokenQuantity.toNumber()).to.be.closeTo(257142857142857142857 * 10 ** 2, 10**3)
     })
   })
 })

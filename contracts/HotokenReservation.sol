@@ -51,6 +51,7 @@ contract HotokenReservation is StandardToken, Ownable {
     mapping(address=>string) public claimTokenMap;
     mapping(address=>uint256) public ethAmount;
     mapping(address=>uint256) public directEthTokens;
+    mapping(uint=>uint) public discountRateToTokenPrice;
 
 
     // Events
@@ -90,6 +91,10 @@ contract HotokenReservation is StandardToken, Ownable {
 
         tokenSold = 0;
         discountRate = DiscountRate.SIXTY_FIVE;
+        discountRateToTokenPrice[uint(DiscountRate.SIXTY_FIVE)] = 35 * (10 ** uint(15)); // $0.035
+        discountRateToTokenPrice[uint(DiscountRate.FOURTY_FIVE)] = 55 * (10 ** uint(15)); // $0.055
+        discountRateToTokenPrice[uint(DiscountRate.TWENTY_FIVE)] = 75 * (10 ** uint(15)); // $0.075
+        discountRateToTokenPrice[uint(DiscountRate.ZERO)] = 1 * (10 ** uint(17)); // $0.1
 
         minimumPurchase = 300 * (10 ** uint(decimals)); // $300
         minimumSold = 2 * (10 ** uint(6)) * (10 ** uint(decimals));
@@ -114,7 +119,7 @@ contract HotokenReservation is StandardToken, Ownable {
         uint _usdCentRate = ethConversionToUSDCentsRate;
         uint _discountRateIndex = uint(discountRate);
 
-        uint256 toBuyTokens = applyDiscount(usdToTokens(usd));
+        uint256 toBuyTokens = usdToTokens(usd);
         uint256 updatedSoldTokens = tokenSold.add(toBuyTokens);
 
         bool exists = ledgerMap[msg.sender].length > 0;
@@ -252,13 +257,6 @@ contract HotokenReservation is StandardToken, Ownable {
         return _discountRate.mul(uint(20)).add(uint(5));
     }
 
-
-    function applyDiscount(uint _amount) public view returns (uint) {
-      uint _discountRate = getDiscountRate();
-      return _discountRate.add(10 ** uint(2)).mul(_amount).div(100);
-    }
-
-
     /**
     * To set conversion rate from supported currencies to $e-18
     * @param _usdCentsPer conversion rate in cent; how many cent for 1 currency unit (int)
@@ -271,8 +269,9 @@ contract HotokenReservation is StandardToken, Ownable {
       return _unit.mul(ethConversionToUSDCentsRate).mul(10 ** uint(decimals-2)).div(10 ** uint(decimals));
     }
 
-    function usdToTokens(uint _usd) public pure returns (uint) {
-      return _usd.mul(10);
+    function usdToTokens(uint _usd) public view returns (uint) {
+      uint price = discountRateToTokenPrice[uint(discountRate)];
+      return _usd.mul(10 ** uint(decimals)).div(price);
     }
 
     /**

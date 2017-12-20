@@ -66,6 +66,7 @@ contract('HotokenReservation', function(accounts) {
     // 1$ => 10tokens
     it('should convert a$ to number of tokens', async function() {
       const h = await HotokenReservation.deployed()
+      await h.setDiscountRate(0)
 
       let usd = 1 * 10 ** 18 // 1$
       let t = await h.usdToTokens(usd)

@@ -9,11 +9,6 @@ const password = process.env.PASSWORD
 const networkConfig = config.networks[process.env.NETWORK]
 
 console.log('Loading contract source code...')
-// const source = fs.readFileSync(path.resolve(__dirname, '../contracts/HotokenReservation.sol'))
-// console.log('Compiling contract...')
-// const compiled = solc.compile(source.toString(), 1) // 1 is for activating optimizer
-// console.error(compiled)
-// const compiledReservation = compiled.contracts[':HotokenReservation']
 const compiledReservation = require('../build/contracts/HotokenReservation')
 
 console.log('Creating Web3 instance...')
@@ -41,4 +36,3 @@ web3.eth.personal.unlockAccount(owner, password)
 }, (e) => {
   console.error('Error deploying contract', e)
 })
-

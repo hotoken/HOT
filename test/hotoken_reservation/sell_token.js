@@ -11,13 +11,14 @@ contract('HotokenReservation', function(accounts) {
       await h.addToWhitelist(user1)
       await h.setPause(false)
       await h.setConversionToUSDCentsRate(45000) // 1ETH = $450.00
+      await h.setDiscountRate(0)
 
       let amount = web3.toWei(2, 'ether')
 
       await h.sendTransaction({from: user1, value: amount})
 
       let user1balance = await h.balanceOf(user1)
-      expect(user1balance.toNumber()).to.be.equal(14850 * 10 ** 18)
+      expect(user1balance.toNumber()).to.be.equal(9000 * 10 ** 18)
     })
   })
 })
@@ -40,7 +41,7 @@ contract('HotokenReservation', function(accounts) {
       await h.sendTransaction({from: user1, value: amount})
 
       let user1balance = await h.balanceOf(user1)
-      expect(user1balance.toNumber()).to.be.equal(11250 * 10 ** 18)
+      expect(user1balance.toNumber()).to.be.equal(12000 * 10 ** 18)
     })
   })
 })
@@ -55,16 +56,16 @@ contract('HotokenReservation', function(accounts) {
       await h.addToWhitelist(user1)
       await h.setPause(false)
       await h.setConversionToUSDCentsRate(45000) // 1ETH = $450.00
+      await h.setDiscountRate(0)
 
       await h.sendTransaction({from: user1, value: 2 * 10 ** 18})
       let user1balance = await h.balanceOf(user1)
-      expect(user1balance.toNumber()).to.be.equal(14850 * 10 ** 18)
+      expect(user1balance.toNumber()).to.be.equal(9000 * 10 ** 18)
 
       // second buy
-      await h.sendTransaction({from: user1, value: 5 * 10 ** 16}) // 0.05ETH
+      await h.sendTransaction({from: user1, value: 5 * 10 ** 18})
       user1balance = await h.balanceOf(user1)
-      // sum = 14850 + 371.25
-      expect(user1balance.toNumber()).to.be.equal(1522125 * 10 ** 16)
+      expect(user1balance.toNumber()).to.be.equal(31500 * 10 ** 18)
     })
   })
 })
@@ -85,7 +86,7 @@ contract('HotokenReservation', function(accounts) {
       expect(eth.toNumber()).to.be.equal(2 * 10 ** 18)
 
       // second buy
-      await h.sendTransaction({from: user1, value: 5 * 10 ** 16}) // 0.05ETH
+      await h.sendTransaction({from: user1, value: 5 * 10 ** 16})
       eth = await h.ethAmount.call(user1)
       expect(eth.toNumber()).to.be.equal(205 * 10 ** 16)
     })
@@ -105,15 +106,16 @@ contract('HotokenReservation', function(accounts) {
       await h.addToWhitelist(user1)
       await h.setPause(false)
       await h.setConversionToUSDCentsRate(45000) // 1ETH = $450.00
+      await h.setDiscountRate(0)
 
       await h.sendTransaction({from: user1, value: 2 * 10 ** 18})
       ownerBalance = await h.balanceOf(owner)
-      expect(ownerBalance.toNumber()).to.be.equal(299998515 * 10 ** 19)
+      expect(ownerBalance.toNumber()).to.be.equal(2999991000 * 10 ** 18)
 
       // second buy
       await h.sendTransaction({from: user1, value: 5 * 10 ** 18})
       ownerBalance = await h.balanceOf(owner)
-      expect(ownerBalance.toNumber()).to.be.equal(2999948025 * 10 ** 18)
+      expect(ownerBalance.toNumber()).to.be.equal(2999968500 * 10 ** 18)
     })
   })
 })
@@ -134,7 +136,8 @@ contract('HotokenReservation', function(accounts) {
       await h.sendTransaction({from: user1, value: amount})
       let sold = await h.tokenSold.call()
 
-      expect(sold.toNumber()).to.be.equal(14850 * 10 ** 18)
+      // 1eth=>$450, buy 2eth, 65% discount
+      expect(sold.toNumber()).to.be.closeTo(257142857142857142857 * 10 ** 2, 10**7)
     })
   })
 })
@@ -154,15 +157,17 @@ contract('HotokenReservation', function(accounts) {
       await h.sendTransaction({from: user1, value: amount})
       let sold = await h.tokenSold.call()
 
-      expect(sold.toNumber()).to.be.equal(14850 * 10 ** 18)
+      // 1eth=>$450, buy 2eth, 65% discount
+      expect(sold.toNumber()).to.be.closeTo(257142857142857142857 * 10 ** 2, 10**7)
 
       const user2 = accounts[2]
       await h.addToWhitelist(user1)
 
+      // 1eth=>$450, buy 1eth, 65% discount
       await h.sendTransaction({from: user1, value: 1 * 10 ** 18})
       sold = await h.tokenSold.call()
 
-      expect(sold.toNumber()).to.be.equal(22275 * 10 ** 18)
+      expect(sold.toNumber()).to.be.closeTo(385714285714285714286 * 10 ** 2, 10**7)
     })
   })
 })
