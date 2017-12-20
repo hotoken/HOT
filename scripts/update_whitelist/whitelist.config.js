@@ -3,6 +3,7 @@ module.exports = {
   excludes: [
     // Test accounts
     '5a273f030c9c030001b6c896',
-    '5a27a6000c9c030001b6c8cc'
+    '5a27a6000c9c030001b6c8cc',
+    '5a34c740e34c80000115c02d',
   ]
 }
